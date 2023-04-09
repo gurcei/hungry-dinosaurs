@@ -15,6 +15,9 @@ present$(1) = "floppy-disk"
 present$(2) = "mega65"
 present$(3) = "whistle"
 
+#declare map_loc_to_objs$(4,2)
+#declare map_idx%
+
 #define GERMANY=0
 #define TURKEY=1
 #define THAILAND=2
@@ -22,19 +25,19 @@ present$(3) = "whistle"
 #define AUSTRALIA=4
 #define MAX_ROOMS=5
 
-#struct ROOM desc$, exits$, locs$, vart$, obj$
+#struct ROOM desc$, exits$, locs$, vart$
 
 ROOM rooms(MAX_ROOMS) = [ {x5F}
  [ "You are trapped in Onion Cake's dirty smelly prison!", {x5F}
-     "", "", "german.v", "", ], {x5F}
+     "", "", "german.v", ], {x5F}
  [ "A Turkish dinosaur is bathing in the thermal waters.", {x5F}
-     "S", "2", "turk.v", "rice-plant", ], {x5F}
+     "S", "2", "turk.v", ], {x5F}
  [ "A Thai dinosuar is performing a traditional dance.", {x5F}
-     "NE", "13", "thai.v", "carnivous-mite", ], {x5F} 
+     "NE", "13", "thai.v", ], {x5F} 
  [ "A Vietnamese dinosaur is tending to the rice terraces.", {x5F}
-     "WS", "24", "viet.v", "eggplant", ], {x5F}
+     "WS", "24", "viet.v", ], {x5F}
  [ "An inebriated Australian dinosaur rests peacefully.", {x5F}
-     "N", "3", "aus.v", "tiger", ] {x5F}
+     "N", "3", "aus.v", ] {x5F}
 ]
 
 goto main
@@ -43,10 +46,27 @@ goto main
 '-----
   return
 
+.remove_from_loc
+'---------------
+  if map_idx%=1 then begin
+    map_loc_to_objs$(current_room%,1) = ""
+  bend:else if map_idx%=0 then begin
+    map_loc_to_objs$(current_room%,0) = ""
+    if map_loc_to_objs$(current_room%,1) <> "" then begin
+      map_loc_to_objs$(current_room%,0) = map_loc_to_objs$(current_room%,1)
+      map_loc_to_objs$(current_room%,1) = ""
+    bend
+  bend
+  return
+
 .take
 '----
   gosub extract_token
-  b$=rooms_obj$(current_room%)
+  map_idx% = -1
+  for k = 0 to 1
+    c$ = map_loc_to_objs$(current_room%,k)
+    if tok$ = left$(c$,3) then b$ = c$:map_idx% = k
+  next k
   if left$(b$,3) = tok$ then begin
     allow% = 1
     if tok$="egg" then print "The eggplant stubbornly resists your attempt to take it!":allow%=0
@@ -57,7 +77,7 @@ goto main
     if allow%=1 then begin
       inventory$(inv_count%) = b$
       inv_count% = inv_count% + 1
-      rooms_obj$(current_room%) = ""
+      gosub remove_from_loc
       print "You take the ";b$;"..."
     bend
   bend:else begin
@@ -68,23 +88,27 @@ goto main
 .hit
 '---
   gosub extract_token
-  b$=rooms_obj$(current_room%)
+  map_idx% = -1
+  for k = 0 to 1
+    c$ = map_loc_to_objs$(current_room%,k)
+    if tok$ = left$(c$,3) then b$ = c$:map_idx% = k
+  next k
   if left$(b$,3) = tok$ then begin
     if tok$="egg" then begin
       print "The impact of your fist causes it to become a fainted-eggplant."
-      rooms_obj$(current_room%)="fainted-eggplant"
+      map_loc_to_objs$(current_room%,map_idx%)="fainted-eggplant"
     bend
     if tok$="ric" then begin
       print "You flatten the rice with your fist, forming a tasty rice-paper-roll."
-      rooms_obj$(current_room%)="rice-paper-roll"
+      map_loc_to_objs$(current_room%,map_idx%)="rice-paper-roll"
     bend
     if tok$="car" then begin
       print "Your violent actions have made the mite rethink life, it is now a vegan-mite."
-      rooms_obj$(current_room%)="vegan-mite"
+      map_loc_to_objs$(current_room%,map_idx%)="vegan-mite"
     bend
     if tok$="tig" then begin
       print "I think you hurt its feelings, it is now a crying-tiger..."
-      rooms_obj$(current_room%)="crying-tiger"
+      map_loc_to_objs$(current_room%,map_idx%)="crying-tiger"
     bend
   bend:else begin
     print "You can't see that here!"
@@ -109,17 +133,26 @@ goto main
   inv_count% = inv_count% - 1
   return
 
+.drop_present
+'-----------
+  if map_loc_to_objs$(current_room%,0) = "" then begin
+    map_loc_to_objs$(current_room%,0) = present$(fed_dino_count%)
+  bend:else begin
+    map_loc_to_objs$(current_room%,1) = present$(fed_dino_count%)
+  bend
+  return
+
 .give
 '----
   gosub extract_token
   gosub find_in_inventory
   if res%=0 then print "You are not carrying that!":return
   if left$(b$,3) = tok$ then begin
-    allow%=1
-    if tok$="ric" and current_room%<>VIETNAM then allow%=0
-    if tok$="veg" and current_room%<>AUSTRALIA then allow%=0
-    if tok$="cry" and current_room%<>THAILAND then allow%=0
-    if tok$="fai" and current_room%<>TURKEY then allow%=0
+    allow%=0
+    if tok$="ric" and current_room%=VIETNAM then allow%=1
+    if tok$="veg" and current_room%=AUSTRALIA then allow%=1
+    if tok$="cry" and current_room%=THAILAND then allow%=1
+    if tok$="fai" and current_room%=TURKEY then allow%=1
     if allow% = 0 then print "The dinosaur appreciates your kind gesture, but that isn't the food it likes"
     if allow% = 1 then begin
       gosub remove_from_inventory
@@ -139,7 +172,7 @@ goto main
       bend
       print "It drops a present for you to show its gratitude..."
       
-      rooms_obj$(current_room%) = present$(fed_dino_count%)
+      gosub drop_present
       fed_dino_count% = fed_dino_count% + 1
     bend
   bend
@@ -181,10 +214,29 @@ goto main
   if a$="x" then stop
 
   gosub extract_token
-  if tok$="tak" then gosub take
+  if tok$="loo" then gosub show_room_text
+  if tok$="tak" or tok$="get" then gosub take
   if tok$="inv" then gosub inventory
   if tok$="hit" then gosub hit
   if tok$="giv" then gosub give
+
+  return
+
+.show_objects
+'------------
+  res%=0
+  for k=0 to 1
+    a$ = map_loc_to_objs$(current_room%, k)
+    b$ = left$(a$,1)
+    c$ = "aeiou"
+    if a$<>"" then begin
+      if res%=0 then print "You see a";:res%=1:else print " and a";
+      if instr(c$,b$)<>0 then print "n";
+      print " ";a$;
+    bend
+  next k
+  
+  if res%<>0 then print " here."
 
   return
 
@@ -192,14 +244,7 @@ goto main
 '--------------
   print rooms_desc$(current_room%)
 
-  a$ = rooms_obj$(current_room%)
-  b$ = left$(a$,1)
-  c$ = "aeiou"
-  if a$<>"" then begin
-    print "You see a";
-    if instr(c$,b$)<>0 then print "n";
-  print " ";a$; " here."
-  bend
+  gosub show_objects
 
   north%=-1:south%=-1:east%=-1:west%=-1
   print "Exits: ";
@@ -240,6 +285,16 @@ goto main
   previous_room% = current_room%
   inv_count% = 0
   fed_dino_count% = 0
+
+  map_loc_to_objs$(TURKEY,0) = "rice-plant"
+  map_loc_to_objs$(THAILAND,0) = "carnivorous-mite"
+  map_loc_to_objs$(VIETNAM,0) = "eggplant"
+  map_loc_to_objs$(AUSTRALIA,0) = "tiger"
+
+  map_loc_to_objs$(TURKEY,1) = ""
+  map_loc_to_objs$(THAILAND,1) = ""
+  map_loc_to_objs$(VIETNAM,1) = ""
+  map_loc_to_objs$(AUSTRALIA,1) = ""
 
   ' screen 0, 640, 400, 4
   return
