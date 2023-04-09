@@ -3,10 +3,17 @@
 
 .declares
 '--------
-#declare k, north%, south%, east%, west%
+#declare k, north%, south%, east%, west%, allow%, res%
 #declare a$,b$,c$,tok$
 #declare current_room%, previous_room%
-#declare inventory$(10),inv_count%=0
+#declare inventory$(10),inv_count%=0,inv_idx%=0
+#declare fed_dino_count% = 0
+
+#declare present$(4)
+present$(0) = "program-listing"
+present$(1) = "floppy-disk"
+present$(2) = "mega65"
+present$(3) = "whistle"
 
 #define GERMANY=0
 #define TURKEY=1
@@ -41,14 +48,104 @@ goto main
   gosub extract_token
   b$=rooms_obj$(current_room%)
   if left$(b$,3) = tok$ then begin
-    inventory$(inv_count%) = b$
-    inv_count% = inv_count% + 1
-    rooms_obj$(current_room%) = ""
-    print "You take the ";b$;"..."
+    allow% = 1
+    if tok$="egg" then print "The eggplant stubbornly resists your attempt to take it!":allow%=0
+    if b$="rice-plant" then print "The rice-plant refuses to relent to your will!":allow%=0
+    if tok$="car" then print "The carnivorous-mite gnashes its teeth at you, forcing you to back down!":allow%=0
+    if tok$="tig" then print "The tiger unleashes a ferocious growl, making you shiver in your boots!":allow%=0
+
+    if allow%=1 then begin
+      inventory$(inv_count%) = b$
+      inv_count% = inv_count% + 1
+      rooms_obj$(current_room%) = ""
+      print "You take the ";b$;"..."
+    bend
   bend:else begin
     print "You can't see that here!"
   bend
   return
+
+.hit
+'---
+  gosub extract_token
+  b$=rooms_obj$(current_room%)
+  if left$(b$,3) = tok$ then begin
+    if tok$="egg" then begin
+      print "The impact of your fist causes it to become a fainted-eggplant."
+      rooms_obj$(current_room%)="fainted-eggplant"
+    bend
+    if tok$="ric" then begin
+      print "You flatten the rice with your fist, forming a tasty rice-paper-roll."
+      rooms_obj$(current_room%)="rice-paper-roll"
+    bend
+    if tok$="car" then begin
+      print "Your violent actions have made the mite rethink life, it is now a vegan-mite."
+      rooms_obj$(current_room%)="vegan-mite"
+    bend
+    if tok$="tig" then begin
+      print "I think you hurt its feelings, it is now a crying-tiger..."
+      rooms_obj$(current_room%)="crying-tiger"
+    bend
+  bend:else begin
+    print "You can't see that here!"
+  bend
+  return
+
+.find_in_inventory
+'-----------------
+  res% = 0 : inv_idx% = -1
+  if inv_count%=0 then return
+  for k=0 to inv_count%-1
+    if left$(inventory$(k),3) = tok$ then res% = 1:inv_idx% = k:b$=inventory$(k)
+  next k
+  return
+
+.remove_from_inventory
+'---------------------
+  if inv_idx%=inv_count%-1 then inv_count%=inv_count%-1:return
+  for k=inv_idx%+1 to inv_count%-1
+    inventory$(k-1) = inventory$(k)
+  next k
+  inv_count% = inv_count% - 1
+  return
+
+.give
+'----
+  gosub extract_token
+  gosub find_in_inventory
+  if res%=0 then print "You are not carrying that!":return
+  if left$(b$,3) = tok$ then begin
+    allow%=1
+    if tok$="ric" and current_room%<>VIETNAM then allow%=0
+    if tok$="veg" and current_room%<>AUSTRALIA then allow%=0
+    if tok$="cry" and current_room%<>THAILAND then allow%=0
+    if tok$="fai" and current_room%<>TURKEY then allow%=0
+    if allow% = 0 then print "The dinosaur appreciates your kind gesture, but that isn't the food it likes"
+    if allow% = 1 then begin
+      gosub remove_from_inventory
+      if current_room% = VIETNAM then begin
+        print "The Vietnamese dinosaur devours the tasty rice-paper roll..."
+      bend
+      if current_room% = AUSTRALIA then begin
+        print "The Australian dinosaur chomps down the scrumptious mite and then"
+        print "falls back asleep..."
+      bend
+      if current_room% = THAILAND then begin
+        print "The Thai dinosaur gracefully dines on the crying-tiger, and "
+        print "then raises its clasped paws to its forehead to wai in thanks."
+      bend
+      if current_room% = TURKEY then begin
+        print "The Turkish dinosaur enthusiastically rips into the tasty fainted-eggplant!"
+      bend
+      print "It drops a present for you to show its gratitude..."
+      
+      rooms_obj$(current_room%) = present$(fed_dino_count%)
+      fed_dino_count% = fed_dino_count% + 1
+    bend
+  bend
+
+  return
+
 
 .inventory
 '---------
@@ -86,6 +183,9 @@ goto main
   gosub extract_token
   if tok$="tak" then gosub take
   if tok$="inv" then gosub inventory
+  if tok$="hit" then gosub hit
+  if tok$="giv" then gosub give
+
   return
 
 .show_room_text
@@ -139,6 +239,7 @@ goto main
   current_room% = VIETNAM
   previous_room% = current_room%
   inv_count% = 0
+  fed_dino_count% = 0
 
   ' screen 0, 640, 400, 4
   return
