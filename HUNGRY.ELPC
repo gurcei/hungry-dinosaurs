@@ -1,0 +1,234 @@
+#output "hungrydinosaurs"
+'------------------------
+
+.declares
+'--------
+#declare k, north%, south%, east%, west%
+#declare a$,b$,c$,tok$
+#declare current_room%, previous_room%
+#declare inventory$(10),inv_count%=0
+
+#define GERMANY=0
+#define TURKEY=1
+#define THAILAND=2
+#define VIETNAM=3
+#define AUSTRALIA=4
+#define MAX_ROOMS=5
+
+#struct ROOM desc$, exits$, locs$, vart$, obj$
+
+ROOM rooms(MAX_ROOMS) = [ {x5F}
+ [ "You are trapped in Onion Cake's dirty smelly prison!", {x5F}
+     "", "", "german.v", "", ], {x5F}
+ [ "A Turkish dinosaur is bathing in the thermal waters.", {x5F}
+     "S", "2", "turk.v", "rice-plant", ], {x5F}
+ [ "A Thai dinosuar is performing a traditional dance.", {x5F}
+     "NE", "13", "thai.v", "carnivous-mite", ], {x5F} 
+ [ "A Vietnamese dinosaur is tending to the rice terraces.", {x5F}
+     "WS", "24", "viet.v", "eggplant", ], {x5F}
+ [ "An inebriated Australian dinosaur rests peacefully.", {x5F}
+     "N", "3", "aus.v", "tiger", ] {x5F}
+]
+
+goto main
+
+.parse
+'-----
+  return
+
+.take
+'----
+  gosub extract_token
+  b$=rooms_obj$(current_room%)
+  if left$(b$,3) = tok$ then begin
+    inventory$(inv_count%) = b$
+    inv_count% = inv_count% + 1
+    rooms_obj$(current_room%) = ""
+    print "You take the ";b$;"..."
+  bend:else begin
+    print "You can't see that here!"
+  bend
+  return
+
+.extract_token
+'-------------
+  k = instr(a$," ")
+  tok$=left$(a$,3)
+  if k>0 then begin
+    a$=mid$(a$,k+1)
+  bend:else begin
+    a$=""
+  bend
+  return
+
+.user_input
+'----------
+  input a$
+
+  if a$="n" and north%<>-1 then current_room%=north%
+  if a$="s" and south%<>-1 then current_room%=south%
+  if a$="e" and east%<>-1 then current_room%=east%
+  if a$="w" and west%<>-1 then current_room%=west%
+  if a$="x" then stop
+
+  gosub extract_token
+  if tok$="tak" then gosub take
+  return
+
+.show_room_text
+'--------------
+  print rooms_desc$(current_room%)
+
+  a$ = rooms_obj$(current_room%)
+  b$ = left$(a$,1)
+  c$ = "aeiou"
+  if a$<>"" then begin
+    print "You see a";
+    if instr(c$,b$)<>0 then print "n";
+  print " ";a$; " here."
+  bend
+
+  north%=-1:south%=-1:east%=-1:west%=-1
+  print "Exits: ";
+  a$ = rooms_exits$(current_room%)
+  for k=1 to len(a$)
+    b$=mid$(a$,k,1)
+    c$=mid$(rooms_locs$(current_room%),k,1)
+    print b$;
+    if k<>len(a$) then print ", ";
+    if b$="N" then north%=val(c$)
+    if b$="S" then south%=val(c$)
+    if b$="E" then east%=val(c$)
+    if b$="W" then west%=val(c$)
+  next k
+  if len(a$)=0 then print "none..."                         
+  print
+  return
+
+.show_room_graphic
+'-----------------
+  return
+
+.main_game
+'---------
+  gosub show_room_graphic
+  gosub show_room_text
+.next_input
+  gosub user_input
+
+  if current_room%<>previous_room% then previous_room%=current_room%:goto main_game
+  goto next_input
+  return
+
+.init_game
+'---------
+  print chr$(147);
+  current_room% = VIETNAM
+  previous_room% = current_room%
+  inv_count% = 0
+
+  ' screen 0, 640, 400, 4
+  return
+
+.main
+'----
+  gosub show_title_page
+  gosub init_game
+  gosub main_game
+  end
+
+
+.show_title_page
+'---------------
+  print chr$(147);
+  print "Onion Cake and the Hungry Dinosaurs"
+  print "==================================="
+  print "  Coding & Music sequencing by Gurce Isikyildiz"
+  print "  Dino Artistry by Ayca Isikyildiz"
+  print
+  print " I)nstructions"
+  print " C)redits"
+  print
+  print " Press SPACE BAR to begin"
+  get key a$
+  if a$="i" then gosub instructions:goto show_title_page
+  if a$="c" then gosub credits:goto show_title_page
+  if a$<>" " then goto show_title_page
+  return
+
+.instructions
+'------------
+  print chr$(147);
+  print "Instructions (page 1 of 2)"
+  print "============"
+  print "The dinosaurs are hungry..."
+  print
+  print "...go and find them the food that they like!"
+  print
+  print "When you give them all the right food, they will reward you with a "
+  print "new retro computer!"
+  print
+  print "...but beware of dirty old Onion Cake..."
+  print
+  print "...he is angry due to somebody stealing his favourite retro computer..."
+  print
+  print "Maybe you can appease his anger by returning it to him..."
+  print
+  print "[Press any key to continue]"
+  get key a$
+  
+  print chr$(147);
+  print "Instructions (page 2 of 2)"
+  print "============"
+  print "This is a simple text adventure game accompanied by vector art drawn "
+  print "(slowly) via BASIC 65 :) Artwork will be cached after 1st draw attempt completes."
+  print
+  print "Type simple VERB NOUN strings to interact with the game."
+  print "  - E.g. TAKE MEGA65"
+  print
+  print "You can abbreviate any word to the first 3 letters."
+  print "  - E.g. TAK MEG"
+  print
+  print "Game Vocabulary"
+  print "---------------"
+  print "- N, S, E, W   (to go North, South, East, West)"
+  print "- I/INVENTORY"
+  print "- GO <place>"
+  print "- TAKE <object>"
+  print "- USE <object>"
+  print "- GIVE <object>"
+  print "- HIT <object>"
+  print "- JOIN <object>"
+  print "- QUIT/EXIT"
+  print
+  print "[Press any key to continue]";
+  get key a$
+
+  return
+
+.credits
+'-------
+  print chr$(147);
+  print "Credits"
+  print "======="
+  print "Coding and Music sequencing by Gurce Isikyildiz"
+  print "Dino Artistry by Ayca Isikyildiz"
+  print
+  print "Song cover credits"
+  print "------------------"
+  print "Australia - ";chr$(34);"Skippy the Bush Kangaroo";chr$(34);
+    print " - Eric Jupp"
+  print "Germany - ";chr$(34);"99 Luftballons";chr$(34);" - NENA"
+  print "Thailand - ";chr$(34);"Khaek Boratet Sawng Chan";chr$(34);
+    print " - Unknown"
+  ' youtu.be/HLqlZ2jGbDg
+  print "Turkey - ";chr$(34);"Hatcam Cikmis Gul Dalina";chr$(34);
+    print " - Unknown"
+  print "Vietnam - ";chr$(34);"Tram to pick...";chr$(34);
+    print " - Unknown"
+  print
+  print "[Press any key to continue]"
+  get key a$
+
+  return
+ÿ
