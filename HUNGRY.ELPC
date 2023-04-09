@@ -50,6 +50,17 @@ goto main
   bend
   return
 
+.inventory
+'---------
+  print "You are carrying:"
+  if inv_count% = 0 then print "  - nothing...":else begin
+    for k=0 to inv_count%-1
+      print "  - ";inventory$(k)
+    next k
+  bend
+
+  return
+
 .extract_token
 '-------------
   k = instr(a$," ")
@@ -69,10 +80,12 @@ goto main
   if a$="s" and south%<>-1 then current_room%=south%
   if a$="e" and east%<>-1 then current_room%=east%
   if a$="w" and west%<>-1 then current_room%=west%
+  if a$="i" then gosub inventory
   if a$="x" then stop
 
   gosub extract_token
   if tok$="tak" then gosub take
+  if tok$="inv" then gosub inventory
   return
 
 .show_room_text
