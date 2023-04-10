@@ -3,17 +3,17 @@
 
 .declares
 '--------
-#declare k, north%, south%, east%, west%, allow%, res%
+#declare k, z, north%, south%, east%, west%, allow%, res%
 #declare a$,b$,c$,tok$
 #declare current_room%, previous_room%
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
 
-#declare present$(4)
-present$(0) = "program-listing"
+#declare present$(4), missing% = 0, game_over% = 0
+present$(0) = "whistle"
 present$(1) = "floppy-disk"
 present$(2) = "mega65"
-present$(3) = "whistle"
+present$(3) = "program-listing"
 
 #declare map_loc_to_objs$(4,2)
 #declare map_idx%
@@ -40,11 +40,13 @@ ROOM rooms(MAX_ROOMS) = [ {x5F}
      "N", "3", "aus.v", ] {x5F}
 ]
 
-goto main
+#declare prog$(7), finished_lines%=0
+prog$(0)="10 print "+chr$(34)+"i promise to onion cake that i will"+chr$(34)
+prog$(1)="20 print "+chr$(34)+"- always write beautiful mega65 programs"+chr$(34)
+prog$(2)="30 print "+chr$(34)+"- make use of delicious petscii characters"+chr$(34)
+prog$(3)="40 print "+chr$(34)+"- make beautiful sid music with the 'play' command"+chr$(34)
 
-.parse
-'-----
-  return
+goto main
 
 .remove_from_loc
 '---------------
@@ -153,6 +155,14 @@ goto main
     if tok$="veg" and current_room%=AUSTRALIA then allow%=1
     if tok$="cry" and current_room%=THAILAND then allow%=1
     if tok$="fai" and current_room%=TURKEY then allow%=1
+    if current_room%=GERMANY then begin
+      if tok$="meg" then begin
+        print "'Not yet, show me that you know how to use this beautiful machine, or else...'"
+      bend:else begin
+        print "Onion Cake glares at you, 'Stop wasting time and prove your skills to me!'"
+      bend
+      return
+    bend
     if allow% = 0 then print "The dinosaur appreciates your kind gesture, but that isn't the food it likes"
     if allow% = 1 then begin
       gosub remove_from_inventory
@@ -179,6 +189,112 @@ goto main
 
   return
 
+.check_we_have_all_computer_items
+'--------------------------------
+  print "Onion cake looks over your inventory..."
+  sleep 2
+  missing%=0
+  for z = 0 to 3
+    tok$ = left$(present$(z), 3)
+    gosub find_in_inventory
+    if res%=0 then begin
+      print "'Hmm... You seem to be missing a ";present$(z);"...'"
+      missing%=1
+    bend
+  next z
+
+  if missing%=1 then begin
+    res%=0
+    print
+    print "I'm afraid this means that I need to shoot you now!"
+    print
+    print "BANG!"
+    return
+  bend
+
+  print "'Looks like you've got it all...'"
+  print "'Now, demonstrate your MEGA65 coding skills to me, otherwise...'"
+  gosub press_a_key
+  res% = 1
+  return
+
+.captured_by_onion_cake
+'----------------------
+  print "Upon hearing your melodious whistling, Onion Cake arrives, holding you"
+  print "at gunpoint, and forcefully escorting you to his dungeon in Germany..."
+  current_room% = GERMANY
+  gosub press_a_key
+
+  print "'I finally caught the thief that stole my MEGA65!', Onion Cake exclaims!"
+  print
+  print "'If you show me your programming skills I will release you!' he offers."
+  print
+  print "'If not, I will shoot you!'"
+  gosub press_a_key
+
+  gosub check_we_have_all_computer_items
+  if res%=0 then game_over%=1:gosub press_a_key:return
+  return
+
+.type_line
+'---------
+  input a$
+  return
+
+.assess_line
+'-----------
+  if a$=prog$(finished_lines%) then begin
+    finished_lines% = finished_lines% + 1
+    if finished_lines%=4 then begin
+      print "'Well done, you completed the program!'"
+    bend:else begin
+      print "'Good, now for the next line!'"
+    bend
+  bend:else begin
+    print "'No no! You made mistakes on this line!', Onion Cake roars"
+    print "'Type it again properly, otherwise I will shoot you!'"
+    print prog$(finished_lines%)
+  bend
+  return
+
+.start_mega65
+'------------
+' draw mega65+listing
+  do while finished_lines% < 4
+    gosub type_line
+    gosub assess_line
+  loop
+
+  print "'Impressive!', Onion Cake says with admiration!"
+  print "'You have proven yourself worthy to keep alive! I hereby release you!"
+  print "Remember your promise, otherwise I will find you and shoot you!'"
+  gosub press_a_key
+
+  print "You are free again! Congratulations, you won the game!"
+  game_over%=1
+  return
+
+.use
+'---
+  gosub extract_token
+  gosub find_in_inventory
+  if res%=0 then print "You are not carrying that!":return
+  if left$(b$,3) = tok$ then begin
+    if tok$="whi" then gosub captured_by_onion_cake:return
+    if tok$="meg" then begin
+      if current_room%=GERMANY then begin
+        gosub start_mega65
+        game_over%=1
+        return
+      bend:else begin
+        print "How could you think of playing with your MEGA65 when there are hungry"
+        print "dinosaurs to feed?!"
+        return
+      bend
+    bend
+    print "You cannot use that!"
+  bend
+  return
 
 .inventory
 '---------
@@ -219,6 +335,7 @@ goto main
   if tok$="inv" then gosub inventory
   if tok$="hit" then gosub hit
   if tok$="giv" then gosub give
+  if tok$="use" then gosub use
 
   return
 
@@ -249,16 +366,18 @@ goto main
   north%=-1:south%=-1:east%=-1:west%=-1
   print "Exits: ";
   a$ = rooms_exits$(current_room%)
-  for k=1 to len(a$)
-    b$=mid$(a$,k,1)
-    c$=mid$(rooms_locs$(current_room%),k,1)
-    print b$;
-    if k<>len(a$) then print ", ";
-    if b$="N" then north%=val(c$)
-    if b$="S" then south%=val(c$)
-    if b$="E" then east%=val(c$)
-    if b$="W" then west%=val(c$)
-  next k
+  if len(a$) > 0 then begin
+    for k=1 to len(a$)
+      b$=mid$(a$,k,1)
+      c$=mid$(rooms_locs$(current_room%),k,1)
+      print b$;
+      if k<>len(a$) then print ", ";
+      if b$="N" then north%=val(c$)
+      if b$="S" then south%=val(c$)
+      if b$="E" then east%=val(c$)
+      if b$="W" then west%=val(c$)
+    next k
+  bend
   if len(a$)=0 then print "none..."                         
   print
   return
@@ -274,6 +393,7 @@ goto main
 .next_input
   gosub user_input
 
+  if game_over%=1 then print:print "GAME OVER":sleep 2:return
   if current_room%<>previous_room% then previous_room%=current_room%:goto main_game
   goto next_input
   return
@@ -285,6 +405,9 @@ goto main
   previous_room% = current_room%
   inv_count% = 0
   fed_dino_count% = 0
+  missing% = 0
+  game_over% = 0
+  finished_lines% = 0
 
   map_loc_to_objs$(TURKEY,0) = "rice-plant"
   map_loc_to_objs$(THAILAND,0) = "carnivorous-mite"
@@ -304,8 +427,15 @@ goto main
   gosub show_title_page
   gosub init_game
   gosub main_game
+  goto main
   end
 
+.press_a_key
+'-----------
+  print
+  print "[Press any key to continue]"
+  get key a$
+  return
 
 .show_title_page
 '---------------
@@ -319,6 +449,7 @@ goto main
   print " C)redits"
   print
   print " Press SPACE BAR to begin"
+  get a$
   get key a$
   if a$="i" then gosub instructions:goto show_title_page
   if a$="c" then gosub credits:goto show_title_page
@@ -342,9 +473,7 @@ goto main
   print "...he is angry due to somebody stealing his favourite retro computer..."
   print
   print "Maybe you can appease his anger by returning it to him..."
-  print
-  print "[Press any key to continue]"
-  get key a$
+  gosub press_a_key
   
   print chr$(147);
   print "Instructions (page 2 of 2)"
@@ -369,9 +498,7 @@ goto main
   print "- HIT <object>"
   print "- JOIN <object>"
   print "- QUIT/EXIT"
-  print
-  print "[Press any key to continue]";
-  get key a$
+  gosub press_a_key
 
   return
 
@@ -395,9 +522,7 @@ goto main
     print " - Unknown"
   print "Vietnam - ";chr$(34);"Tram to pick...";chr$(34);
     print " - Unknown"
-  print
-  print "[Press any key to continue]"
-  get key a$
+    gosub press_a_key
 
   return
 ÿ
