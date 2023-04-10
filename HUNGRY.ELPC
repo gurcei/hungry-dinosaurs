@@ -486,7 +486,9 @@ goto main
   print
   print "You can abbreviate any word to the first 3 letters."
   print "  - E.g. TAK MEG"
-  print
+  gosub press_a_key
+
+  print chr$(147);
   print "Game Vocabulary"
   print "---------------"
   print "- N, S, E, W   (to go North, South, East, West)"
@@ -522,7 +524,22 @@ goto main
     print " - Unknown"
   print "Vietnam - ";chr$(34);"Tram to pick...";chr$(34);
     print " - Unknown"
-    gosub press_a_key
+  gosub press_a_key
 
+  print chr$(147);
+  print "Thanks to MrZaadii"
+  print "------------------"
+  print "Finally, a word of thanks to MrZaadii for his awesome youtube videos:"
+  print "- https://tinyurl.com/mrzaadii-playlist"
+  print
+  print "The inspiration for this game came from his 'Escape from Onion Cake' game:"
+  print "- https://youtu.be/TvFXC_quuDo"
+  print
+  print "His last-released version of the game no longer works with latest MEGA65 ROM"
+  print "- https://tinyurl.com/efoc-orig"
+  print
+  print "I've made some repairs/enhancements so that it runs on latest MEGA65 ROM here:"
+  print "- https://tinyurl.com/efoc-new"
+  gosub press_a_key
   return
 ÿ
