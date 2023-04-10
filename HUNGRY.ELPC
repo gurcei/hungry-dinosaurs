@@ -327,6 +327,7 @@ goto main
   if a$="e" and east%<>-1 then current_room%=east%
   if a$="w" and west%<>-1 then current_room%=west%
   if a$="i" then gosub inventory
+  if a$="l" then gosub show_room_text
   if a$="x" then stop
 
   gosub extract_token
@@ -492,6 +493,7 @@ goto main
   print "Game Vocabulary"
   print "---------------"
   print "- N, S, E, W   (to go North, South, East, West)"
+  print "- L/LOOK"
   print "- I/INVENTORY"
   print "- GO <place>"
   print "- TAKE <object>"
@@ -522,7 +524,7 @@ goto main
   ' youtu.be/HLqlZ2jGbDg
   print "Turkey - ";chr$(34);"Hatcam Cikmis Gul Dalina";chr$(34);
     print " - Unknown"
-  print "Vietnam - ";chr$(34);"Tram to pick...";chr$(34);
+  print "Vietnam - ";chr$(34);"Trong Com (Rice Drum song)";chr$(34);
     print " - Unknown"
   gosub press_a_key
 
