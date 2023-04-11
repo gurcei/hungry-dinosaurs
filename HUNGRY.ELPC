@@ -9,6 +9,8 @@
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
 
+#declare curx%,cury%, s$
+
 #declare load_state%
 #declare ret%, fill_state%
 #define COLOUR = 63
@@ -376,9 +378,21 @@ goto main
 
   return
 
+.draw_text
+'---------
+  for k = 0 to len(s$)
+    char curx%, 336+cury%*8,2,1,2,mid$(s$,k+1,1)
+    curx% = curx% + 1
+    if curx% = 80 then begin
+      curx% = 0
+      cury% = cury% + 1
+      if cury% = 4 then stop 
+  next k
+  return
+
 .show_room_text
 '--------------
-  print rooms_desc$(current_room%)
+  s$=rooms_desc$(current_room%):gosub draw_text
 
   gosub show_objects
 
