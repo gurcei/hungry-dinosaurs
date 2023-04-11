@@ -9,7 +9,7 @@
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
 
-#declare curx%,cury%, s$
+#declare curx%,cury%, s$, cr, offset%
 
 #declare load_state%
 #declare ret%, fill_state%
@@ -45,19 +45,19 @@ present$(3) = "program-listing"
 #define AUSTRALIA=4
 #define MAX_ROOMS=5
 
-#struct ROOM desc$, exits$, locs$, vart$
+#struct ROOM desc$, exits$, locs$, vart$, offset%
 
 ROOM rooms(MAX_ROOMS) = [ {x5F}
  [ "You are trapped in Onion Cake's dirty smelly prison!", {x5F}
-     "", "", "german.v", ], {x5F}
+     "", "", "german.v", 0 ], {x5F}
  [ "A Turkish dinosaur is bathing in the thermal waters.", {x5F}
-     "S", "2", "turk.v", ], {x5F}
+     "S", "2", "turk.v", 0 ], {x5F}
  [ "A Thai dinosuar is performing a traditional dance.", {x5F}
-     "NE", "13", "thai.v", ], {x5F} 
+     "NE", "13", "thai.v", -9 ], {x5F} 
  [ "A Vietnamese dinosaur is tending to the rice terraces.", {x5F}
-     "WS", "24", "viet.v", ], {x5F}
+     "WS", "24", "viet.v", 0 ], {x5F}
  [ "An inebriated Australian dinosaur rests peacefully.", {x5F}
-     "N", "3", "aus.v", ] {x5F}
+     "N", "3", "aus.v", -16 ] {x5F}
 ]
 
 #declare prog$(7), finished_lines%=0
@@ -368,31 +368,47 @@ goto main
     b$ = left$(a$,1)
     c$ = "aeiou"
     if a$<>"" then begin
-      if res%=0 then print "You see a";:res%=1:else print " and a";
-      if instr(c$,b$)<>0 then print "n";
-      print " ";a$;
+      if res%=0 then begin
+        s$="You see a" : cr=0 : gosub draw_text
+        res%=1
+      bend : else begin
+        s$=" and a" : cr=0 : gosub draw_text
+      bend
+      if instr(c$,b$)<>0 then begin
+        s$="n" : cr=0 : gosub draw_text
+      bend
+      s$ = " " + a$ : cr=0 : gosub draw_text
     bend
   next k
   
-  if res%<>0 then print " here."
+  if res%<>0 then begin
+    s$=" here.":cr=1:gosub draw_text
+  bend
 
   return
 
 .draw_text
 '---------
-  for k = 0 to len(s$)
-    char curx%, 336+cury%*8,2,1,2,mid$(s$,k+1,1)
+  pen 0,1
+  for k = 0 to len(s$)-1
+    char curx%, 320+cury%*16,2,1,2,mid$(s$,k+1,1)
     curx% = curx% + 1
     if curx% = 80 then begin
       curx% = 0
       cury% = cury% + 1
       if cury% = 4 then stop 
+    bend
   next k
+  if cr=1 then begin
+    curx% = 0
+    cury% = cury% + 1
+    if cury% = 4 then stop
+  bend
   return
 
 .show_room_text
 '--------------
-  s$=rooms_desc$(current_room%):gosub draw_text
+  s$=rooms_desc$(current_room%):cr=1:gosub draw_text
 
   gosub show_objects
 
@@ -417,6 +433,11 @@ goto main
 
 .show_room_graphic
 '-----------------
+  curx% = 0
+  cury% = 0
+
+  screen clr 0
+  offset% = rooms_offset%(current_room%)
   gosub load
   return
 
@@ -745,18 +766,18 @@ goto main
 
     if load_state% = LINE then begin
       print "line ";
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       lx0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
-      ly0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
+      ly0% = m0% + (m1% << 8) + offset%:if ly0%<0 then begin:ly0%=0:bend
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       mx% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
-      my% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
+      my% = m0% + (m1% << 8) + offset%:if my%<0 then begin:my%=0:bend
       line lx0%, ly0%, mx%, my%
 
       load_state% = -1
@@ -765,14 +786,14 @@ goto main
 
     if load_state% = CIRCLE then begin
       print "circle ";
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       cx0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
-      cy0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = (m0% and 255)
+      get#2,m1% : m1% = (m1% and 255)
+      cy0% = m0% + (m1% << 8) + offset%:if cy0%<0 then begin:cy0%=0:bend
+      get#2,m0% : m0% = (m0% and 255)
+      get#2,m1% : m1% = (m1% and 255)
       radius% = m0% + (m1% << 8)
 
       circle cx0%, cy0%, radius%, fill_state%
@@ -783,17 +804,17 @@ goto main
 
     if load_state% = ELLIPSE then begin
       print "ellipse ";
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       ex0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
-      ey0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
+      ey0% = m0% + (m1% << 8) + offset%:if ey0%<0 then begin:ey0%=0:bend
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       xradius% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       yradius% = m0% + (m1% << 8)
 
       ellipse ex0%, ey0%, xradius%, yradius%, fill_state%
@@ -805,18 +826,18 @@ goto main
 
     if load_state% = BOX then begin
       print "box ";
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       bx0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
-      by0% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
+      by0% = m0% + (m1% << 8) + offset% : if by0%<0 then begin:by0%=0:bend
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
       mx% = m0% + (m1% << 8)
-      get#2,m0% : m0% = m0% and 255 : print m0%;
-      get#2,m1% : m1% = m1% and 255 : print m1%;
-      my% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255
+      get#2,m1% : m1% = m1% and 255
+      my% = m0% + (m1% << 8) + offset% : if my%<0 then begin:my%=0:bend
 
       box bx0%, by0%, mx%, my%, fill_state%
 
@@ -831,12 +852,13 @@ goto main
       poly_idx% = k
 
       for k = 0 to poly_idx%-1
-        get#2,m0% : m0% = m0% and 255 : print m0%;
-        get#2,m1% : m1% = m1% and 255 : print m1%;
+        get#2,m0% : m0% = m0% and 255
+        get#2,m1% : m1% = m1% and 255
         poly_x%(k) = m0% + (m1% << 8)
-        get#2,m0% : m0% = m0% and 255 : print m0%;
-        get#2,m1% : m1% = m1% and 255 : print m1%;
-        poly_y%(k) = m0% + (m1% << 8)
+        get#2,m0% : m0% = m0% and 255
+        get#2,m1% : m1% = m1% and 255
+        poly_y%(k) = m0% + (m1% << 8) + offset%
+        if poly_y%(k)<0 then begin:poly_y%(k)=0:bend
 
         if (k>0) then line poly_x%(k-1), poly_y%(k-1), poly_x%(k), poly_y%(k)
       next k
