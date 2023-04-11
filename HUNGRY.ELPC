@@ -23,8 +23,9 @@
 #define POLY    = 4
 #declare m0%, m1%, lx0%, ly0%, mx%, my%, cx0%, cy0%, ex0%, ey0%
 #declare radius%, xradius%, yradius%, bx0%, by0%, poly_idx%
-#declare poly_x%, poly_y%, ymin%, ymax%, idx%, rev%, y0%, y1%, tmp%, y%
-#declare x0%, x1%, x%, y%, m, c, pidx%, px%, i%, swapped%, j%
+#declare poly_x%(250), poly_y%(250), ymin%, ymax%
+#declare idx%, rev%, y0%, y1%, tmp%, y%
+#declare x0%, x1%, x%, y%, m, c, pidx%, px%(20), i%, swapped%, j%
 
 #declare present$(4), missing% = 0, game_over% = 0
 present$(0) = "whistle"
@@ -402,6 +403,7 @@ goto main
 
 .show_room_graphic
 '-----------------
+  gosub load
   return
 
 .main_game
@@ -437,7 +439,7 @@ goto main
   map_loc_to_objs$(VIETNAM,1) = ""
   map_loc_to_objs$(AUSTRALIA,1) = ""
 
-  ' screen 0, 640, 400, 4
+  screen 0, 640, 400, 4
   return
 
 .main
@@ -693,7 +695,7 @@ goto main
 '----
   ' for now, just load from a single hard-coded file
   load_state% = -4
-  ^^dopen #2,"test.v",r,u8
+  dopen #2,(rooms_vart$(current_room%)),r,u8
   do
     get#2, k:print "rd=";k;
     if st then exit
