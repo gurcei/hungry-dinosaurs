@@ -9,7 +9,7 @@
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
 
-#declare curx%,cury%, s$, cr, offset%
+#declare curx%,cury%, s$, cr, dc, dk, dl, offset%, line$, a, valid%, sk
 
 #declare load_state%
 #declare ret%, fill_state%
@@ -66,6 +66,8 @@ prog$(1)="20 print "+chr$(34)+"- always write beautiful mega65 programs"+chr$(34
 prog$(2)="30 print "+chr$(34)+"- make use of delicious petscii characters"+chr$(34)
 prog$(3)="40 print "+chr$(34)+"- make beautiful sid music with the 'play' command"+chr$(34)
 
+border 4:background 0:print chr$(14);
+
 goto main
 
 .remove_from_loc
@@ -85,6 +87,7 @@ goto main
 '----
   gosub extract_token
   map_idx% = -1
+  b$=""
   for k = 0 to 1
     c$ = map_loc_to_objs$(current_room%,k)
     if tok$ = left$(c$,3) then b$ = c$:map_idx% = k
@@ -111,6 +114,7 @@ goto main
 '---
   gosub extract_token
   map_idx% = -1
+  b$=""
   for k = 0 to 1
     c$ = map_loc_to_objs$(current_room%,k)
     if tok$ = left$(c$,3) then b$ = c$:map_idx% = k
@@ -338,9 +342,68 @@ goto main
   bend
   return
 
+.draw_cursor
+'-----------
+  pen 0,1
+  for dl=0 to 15
+    line curx%*8,320+cury%*16+dl,curx%*8+7,320+cury%*16+dl
+  next dl
+  return
+
+.hide_cursor
+'-----------
+  pen 0,0
+  for dl=0 to 15
+    line curx%*8,320+cury%*16+dl,curx%*8+7,320+cury%*16+dl
+  next dl
+  return
+
+.safe_cury_inc
+'-------------
+  poke $d020,peek($d020)+1
+  cury%=cury% + 1
+  if cury% => 5 then begin
+    gosub scroll_text_up
+    sleep .1
+  bend
+  return
+
+.get_input_to_a$
+'---------------
+  gosub draw_cursor
+  line$=""
+  do
+    get key a$
+    a=asc(a$)
+    valid%=1
+    if (a<32 or a>127) and a<>13 and not (a=20 and len(line$)>0) then valid%=0
+    if valid% = 1 then begin
+      if a=13 then begin ' carriage-return?
+        a$=line$
+        gosub hide_cursor
+        curx%=0
+        gosub safe_cury_inc
+        return
+      bend
+      if a=20 then begin ' inst-del
+        line$=left$(line$,len(line$)-1)
+        gosub hide_cursor
+        curx%=curx%-1
+        gosub draw_cursor
+      bend
+      if a<>13 and a<>20 then begin ' any other key?
+        line$=line$+a$
+        gosub hide_cursor
+        s$=a$:cr=0:gosub draw_text
+        gosub draw_cursor
+      bend
+    bend
+  loop
+  return
+
 .user_input
 '----------
-  input a$
+  gosub get_input_to_a$
 
   if a$="n" and north%<>-1 then current_room%=north%
   if a$="s" and south%<>-1 then current_room%=south%
@@ -369,66 +432,78 @@ goto main
     c$ = "aeiou"
     if a$<>"" then begin
       if res%=0 then begin
-        s$="You see a" : cr=0 : gosub draw_text
+        s$="You see a" : cr=0 : dc=14 : gosub draw_text
         res%=1
       bend : else begin
-        s$=" and a" : cr=0 : gosub draw_text
+        s$=" and a" : cr=0 : dc=14 : gosub draw_text
       bend
       if instr(c$,b$)<>0 then begin
-        s$="n" : cr=0 : gosub draw_text
+        s$="n" : cr=0 : dc=14 : gosub draw_text
       bend
-      s$ = " " + a$ : cr=0 : gosub draw_text
+      s$ = " " + a$ : cr=0 : dc= 3 : gosub draw_text
     bend
   next k
   
   if res%<>0 then begin
-    s$=" here.":cr=1:gosub draw_text
+    s$=" here.":cr=1:dc=14:gosub draw_text
   bend
 
   return
 
+.scroll_text_up
+'--------------
+  for sk=0 to 7
+    edma 0, 640*4, $40000+640*21+sk*$4000, $40000+640*20+sk*$4000
+  next sk
+  for sk=0 to 7
+    edma 3, 640, 0, $40000+640*24+sk*$4000
+  next sk
+  cury%=cury%-1
+  return
+
 .draw_text
 '---------
-  pen 0,1
-  for k = 0 to len(s$)-1
-    char curx%, 320+cury%*16,2,1,2,mid$(s$,k+1,1)
-    curx% = curx% + 1
-    if curx% = 80 then begin
-      curx% = 0
-      cury% = cury% + 1
-      if cury% = 4 then stop 
-    bend
-  next k
+  pen 0,dc
+  if len(s$) > 0 then begin
+    for dk = 0 to len(s$)-1
+      char curx%, 320+cury%*16,2,1,2,mid$(s$,dk+1,1)
+      curx% = curx% + 1
+      if curx% = 80 then begin
+        curx% = 0
+        gosub safe_cury_inc
+      bend
+    next dk
+  bend
   if cr=1 then begin
     curx% = 0
-    cury% = cury% + 1
-    if cury% = 4 then stop
+    gosub safe_cury_inc
   bend
   return
 
 .show_room_text
 '--------------
-  s$=rooms_desc$(current_room%):cr=1:gosub draw_text
+  s$=rooms_desc$(current_room%):cr=1:dc=14:gosub draw_text
 
   gosub show_objects
 
   north%=-1:south%=-1:east%=-1:west%=-1
-  print "Exits: ";
+
+  s$="Exits: ":cr=0:dc=14:gosub draw_text
   a$ = rooms_exits$(current_room%)
   if len(a$) > 0 then begin
     for k=1 to len(a$)
       b$=mid$(a$,k,1)
       c$=mid$(rooms_locs$(current_room%),k,1)
-      print b$;
-      if k<>len(a$) then print ", ";
+      s$=b$:cr=0:dc=7:gosub draw_text
+      if k<>len(a$) then s$= ", ":cr=0:dc=14:gosub draw_text
       if b$="N" then north%=val(c$)
       if b$="S" then south%=val(c$)
       if b$="E" then east%=val(c$)
       if b$="W" then west%=val(c$)
     next k
   bend
-  if len(a$)=0 then print "none..."                         
-  print
+  if len(a$)=0 then s$="none...":cr=0:dc=12:gosub draw_text
+  s$="":cr=1:gosub draw_text
   return
 
 .show_room_graphic
@@ -534,7 +609,9 @@ goto main
   print "Instructions (page 2 of 2)"
   print "============"
   print "This is a simple text adventure game accompanied by vector art drawn "
-  print "(slowly) via BASIC 65 :) Artwork will be cached after 1st draw attempt completes."
+  print "(slowly) via BASIC 65 :)"
+  print
+  print "Artwork will be cached after 1st draw attempt completes."
   print
   print "Type simple VERB NOUN strings to interact with the game."
   print "  - E.g. TAKE MEGA65"
