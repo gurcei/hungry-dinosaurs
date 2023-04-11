@@ -9,6 +9,23 @@
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
 
+#declare load_state%
+#declare ret%, fill_state%
+#define COLOUR = 63
+#declare vec_data%(12000)
+#declare vec_size% = 3
+#declare selected_colour% = 1
+#declare last_colour% = -1
+#define LINE    = 0
+#define CIRCLE  = 1
+#define ELLIPSE = 2
+#define BOX     = 3
+#define POLY    = 4
+#declare m0%, m1%, lx0%, ly0%, mx%, my%, cx0%, cy0%, ex0%, ey0%
+#declare radius%, xradius%, yradius%, bx0%, by0%, poly_idx%
+#declare poly_x%, poly_y%, ymin%, ymax%, idx%, rev%, y0%, y1%, tmp%, y%
+#declare x0%, x1%, x%, y%, m, c, pidx%, px%, i%, swapped%, j%
+
 #declare present$(4), missing% = 0, game_over% = 0
 present$(0) = "whistle"
 present$(1) = "floppy-disk"
@@ -543,5 +560,281 @@ goto main
   print "I've made some repairs/enhancements so that it runs on latest MEGA65 ROM here:"
   print "- https://tinyurl.com/efoc-new"
   gosub press_a_key
+  return
+
+.load_error
+'----------
+  border 2
+  load_state% = -4
+  print "error loading file..."
+  stop
+  return
+
+.find_ymin_ymax
+'--------------
+  ymin% = poly_y%(0)
+  ymax% = poly_y%(0)
+  for idx% = 0 to poly_idx%-1
+    if poly_y%(idx%) < ymin% then ymin% = poly_y%(idx%)
+    if poly_y%(idx%) > ymax% then ymax% = poly_y%(idx%)
+  next idx%
+  return 
+
+.is_y_in_line_yrange
+'-------------------
+  ret% = 0: rev% = 0
+  y0% = poly_y%(idx%-1)
+  y1% = poly_y%(idx%)
+  if y0% > y1% then tmp%=y0%:y0% = y1%:y1% = tmp%:rev%=1
+  if y0% <= y% and y% < y1% then ret% = 1
+  return
+
+.check_line_intersect
+'--------------------
+  gosub is_y_in_line_yrange
+  if ret% = 0 then return
+
+  x0% = poly_x%(idx%-1)
+  x1% = poly_x%(idx%)
+  if rev%=1 then tmp%=x0%:x0% = x1%:x1% = tmp%
+
+  if x0% = x1% then x% =x0%:ret% = 1:return
+
+  m = (y1%-y0%) / (x1% - x0%)
+  c = y0% - m * x0%
+  
+  x% = (y% - c) / m
+  ret% = 1
+  return
+
+.find_intersects
+'---------------
+  pidx% = 0
+
+  ' check last-point to first
+  poly_x%(poly_idx%) = poly_x%(0)
+  poly_y%(poly_idx%) = poly_y%(0)
+
+  for idx% = 1 to poly_idx%
+    gosub check_line_intersect
+    if ret% = 1 then px%(pidx%)=x% : pidx% = pidx% + 1
+  next idx%
+
+  return
+
+.sort_intersects
+'---------------
+  ' bubble sort algorithm from: geeksforgeeks.org/bubble-sort
+  
+#ifdef DEBUG_SORT
+  gosub clear_menu
+  char 0,0,1,1,2,str$(pidx%-1)
+
+  for i%=0 to pidx%-1
+    char 4+i%*4,0,1,1,2,str$(px%(i%))
+  next i%
+#endif
+
+  for i% = 0 to pidx%-2
+    swapped% = 0
+    for j% = 0 to pidx%-i%-2
+      if px%(j%) > px%(j%+1) then begin
+        tmp%=px%(j%)
+        px%(j%) = px%(j%+1)
+        px%(j%+1) = tmp%
+        swapped% = 1
+      bend
+    next j%
+
+    if swapped% = 0 then i% = pidx%  ' exit early
+  next i%
+
+#ifdef DEBUG_SORT
+  for i%=0 to pidx%-1
+    char 4+i%*4,10,1,1,2,str$(px%(i%))
+  next i%
+
+  getkey a$
+#endif
+
+  return
+
+.draw_horizontal_intersects
+'--------------------------
+  gosub find_intersects
+  gosub sort_intersects
+  for idx%=0 to pidx%-1 step 2
+    line px%(idx%),y%,px%(idx%+1),y%
+  next idx%
+  return
+
+.fill_poly
+'---------
+  gosub find_ymin_ymax
+  for y%=ymin% to ymax%
+    gosub draw_horizontal_intersects
+  next y%
+  return
+
+.check_vec_header
+'----------------
+  ret% = 0
+  if k<>asc("v") then return
+  get#2, k:print k;
+  if k<>asc("e") then return
+  get#2, k:print k;
+  if k<>asc("c") then return
+  ret% = 1
+  vec_size% = 3
+  load_state%=-1
+  return
+
+.load
+'----
+  ' for now, just load from a single hard-coded file
+  load_state% = -4
+  ^^dopen #2,"test.v",r,u8
+  do
+    get#2, k:print "rd=";k;
+    if st then exit
+
+    if load_state% = -4 then begin
+      print "check_vec ";
+      gosub check_vec_header
+      if ret% = 0 then gosub load_error:exit:else goto nxt_lp
+    bend
+
+    if load_state% = -1 then begin
+      print "new_cmd ";
+      fill_state% = (k and 64)/64
+      k = k and 63
+      load_state% = k
+    bend
+
+    if load_state% = COLOUR then begin
+      print "colour ";
+      get#2,k:print k;
+      pen 0, k
+
+      vec_data%(vec_size%) = COLOUR
+      vec_size% = vec_size% +1
+      vec_data%(vec_size%) = k
+      vec_size% = vec_size% +1
+      last_colour% = k
+      selected_colour% = k
+
+      load_state% = -1
+      goto nxt_lp
+    bend
+
+    if load_state% = LINE then begin
+      print "line ";
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      lx0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      ly0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      mx% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      my% = m0% + (m1% << 8)
+      line lx0%, ly0%, mx%, my%
+
+      load_state% = -1
+      goto nxt_lp
+    bend
+
+    if load_state% = CIRCLE then begin
+      print "circle ";
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      cx0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      cy0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      radius% = m0% + (m1% << 8)
+
+      circle cx0%, cy0%, radius%, fill_state%
+
+      load_state% = -1
+      goto nxt_lp
+    bend
+
+    if load_state% = ELLIPSE then begin
+      print "ellipse ";
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      ex0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      ey0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      xradius% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      yradius% = m0% + (m1% << 8)
+
+      ellipse ex0%, ey0%, xradius%, yradius%, fill_state%
+
+      load_state% = -1
+      goto nxt_lp
+
+    bend
+
+    if load_state% = BOX then begin
+      print "box ";
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      bx0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      by0% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      mx% = m0% + (m1% << 8)
+      get#2,m0% : m0% = m0% and 255 : print m0%;
+      get#2,m1% : m1% = m1% and 255 : print m1%;
+      my% = m0% + (m1% << 8)
+
+      box bx0%, by0%, mx%, my%, fill_state%
+
+      load_state% = -1
+      goto nxt_lp
+
+    bend
+
+    if load_state% = POLY then begin
+      print "poly ";
+      get#2,k:k = k and 255
+      poly_idx% = k
+
+      for k = 0 to poly_idx%-1
+        get#2,m0% : m0% = m0% and 255 : print m0%;
+        get#2,m1% : m1% = m1% and 255 : print m1%;
+        poly_x%(k) = m0% + (m1% << 8)
+        get#2,m0% : m0% = m0% and 255 : print m0%;
+        get#2,m1% : m1% = m1% and 255 : print m1%;
+        poly_y%(k) = m0% + (m1% << 8)
+
+        if (k>0) then line poly_x%(k-1), poly_y%(k-1), poly_x%(k), poly_y%(k)
+      next k
+      line poly_x%(poly_idx%-1),poly_y%(poly_idx%-1),poly_x%(0),poly_y%(0)
+      if fill_state% = 1 then gosub fill_poly
+
+      load_state% = -1
+      goto nxt_lp
+
+    bend
+
+.nxt_lp
+  loop
+  dclose #2
+
   return
 ÿ
