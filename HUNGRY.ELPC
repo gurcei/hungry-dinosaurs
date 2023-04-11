@@ -66,7 +66,7 @@ prog$(1)="20 print "+chr$(34)+"- always write beautiful mega65 programs"+chr$(34
 prog$(2)="30 print "+chr$(34)+"- make use of delicious petscii characters"+chr$(34)
 prog$(3)="40 print "+chr$(34)+"- make beautiful sid music with the 'play' command"+chr$(34)
 
-border 4:background 0:print chr$(14);
+border 0:background 0:print chr$(14);
 
 goto main
 
@@ -94,19 +94,39 @@ goto main
   next k
   if left$(b$,3) = tok$ then begin
     allow% = 1
-    if tok$="egg" then print "The eggplant stubbornly resists your attempt to take it!":allow%=0
-    if b$="rice-plant" then print "The rice-plant refuses to relent to your will!":allow%=0
-    if tok$="car" then print "The carnivorous-mite gnashes its teeth at you, forcing you to back down!":allow%=0
-    if tok$="tig" then print "The tiger unleashes a ferocious growl, making you shiver in your boots!":allow%=0
+    if tok$="egg" then begin
+      s$="The eggplant stubbornly resists your attempt to take it!"
+      cr=1:dc=14:gosub draw_text
+      allow%=0
+    bend
+    if b$="rice-plant" then begin
+      s$="The rice-plant refuses to relent to your will!"
+      cr=1:dc=14:gosub draw_text
+      allow%=0
+    bend
+    if tok$="car" then begin
+      s$="The carnivorous-mite gnashes its teeth at you, forcing you to back down!"
+      cr=1:dc=14:gosub draw_text
+      allow%=0
+    bend
+    if tok$="tig" then begin
+      s$="The tiger unleashes a ferocious growl, making you shiver in your boots!"
+      cr=1:dc=14:gosub draw_text
+      allow%=0
+    bend
 
     if allow%=1 then begin
       inventory$(inv_count%) = b$
       inv_count% = inv_count% + 1
       gosub remove_from_loc
-      print "You take the ";b$;"..."
+
+      s$="You take the ":cr=0:dc=14:gosub draw_text
+      s$=b$:cr=0:dc=3:gosub draw_text
+      s$="...":cr=1:dc=14:gosub draw_text
     bend
   bend:else begin
-    print "You can't see that here!"
+    s$="You can't see that here!"
+    cr=1:dc=14:gosub draw_text
   bend
   return
 
@@ -121,23 +141,36 @@ goto main
   next k
   if left$(b$,3) = tok$ then begin
     if tok$="egg" then begin
-      print "The impact of your fist causes it to become a fainted-eggplant."
+      s$="The impact of your fist causes it to become a "
+      cr=0:dc=14:gosub draw_text
+      s$="fainted-eggplant":cr=0:dc=3:gosub draw_text
+      s$=".":cr=1:gosub draw_text
       map_loc_to_objs$(current_room%,map_idx%)="fainted-eggplant"
     bend
     if tok$="ric" then begin
-      print "You flatten the rice with your fist, forming a tasty rice-paper-roll."
+      s$="You flatten the rice with your fist, forming a tasty "
+      cr=0:dc=14:gosub draw_text
+      s$="rice-paper-roll":cr=0:dc=3:gosub draw_text
+      s$=".":cr=1:dc=14:gosub draw_text
       map_loc_to_objs$(current_room%,map_idx%)="rice-paper-roll"
     bend
     if tok$="car" then begin
-      print "Your violent actions have made the mite rethink life, it is now a vegan-mite."
+      s$="Your violent actions have made the mite rethink life, it is now a "
+      cr=0:dc=14:gosub draw_text
+      s$="vegan-mite":cr=0:dc=3:gosub draw_text
+      s$=".":cr=1:dc=14:gosub draw_text
       map_loc_to_objs$(current_room%,map_idx%)="vegan-mite"
     bend
     if tok$="tig" then begin
-      print "I think you hurt its feelings, it is now a crying-tiger..."
+      s$="I think you hurt its feelings, it is now a "
+      cr=0:dc=14:gosub draw_text
+      s$="crying-tiger":cr=0:dc=3:gosub draw_text
+      s$="...":cr=1:dc=14:gosub draw_text
       map_loc_to_objs$(current_room%,map_idx%)="crying-tiger"
     bend
   bend:else begin
-    print "You can't see that here!"
+    s$="You can't see that here!"
+    cr=1:dc=14:gosub draw_text
   bend
   return
 
@@ -172,7 +205,11 @@ goto main
 '----
   gosub extract_token
   gosub find_in_inventory
-  if res%=0 then print "You are not carrying that!":return
+  if res%=0 then begin
+    s$="You are not carrying that!"
+    cr=1:dc=14:gosub draw_text
+    return
+  bend
   if left$(b$,3) = tok$ then begin
     allow%=0
     if tok$="ric" and current_room%=VIETNAM then allow%=1
@@ -181,30 +218,44 @@ goto main
     if tok$="fai" and current_room%=TURKEY then allow%=1
     if current_room%=GERMANY then begin
       if tok$="meg" then begin
-        print "'Not yet, show me that you know how to use this beautiful machine, or else...'"
+        s$="'Not yet, show me that you know how to use this beautiful machine, or else...'"
+        cr=1:dc=2:gosub draw_text
       bend:else begin
-        print "Onion Cake glares at you, 'Stop wasting time and prove your skills to me!'"
+        s$="Onion Cake glares at you, "
+        cr=0:dc=14:gosub draw_text
+        s$="'Stop wasting time and prove your skills to me!'"
+        cr=1:dc=2:gosub draw_text
       bend
       return
     bend
-    if allow% = 0 then print "The dinosaur appreciates your kind gesture, but that isn't the food it likes"
+    if allow% = 0 then begin
+      s$="The dinosaur appreciates your kind gesture, but that isn't the food it likes"
+      cr=1:dc=14:gosub draw_text
+    bend
     if allow% = 1 then begin
       gosub remove_from_inventory
       if current_room% = VIETNAM then begin
-        print "The Vietnamese dinosaur devours the tasty rice-paper roll..."
+        s$="The Vietnamese dinosaur devours the tasty rice-paper roll..."
+        cr=1:dc=14:gosub draw_text
       bend
       if current_room% = AUSTRALIA then begin
-        print "The Australian dinosaur chomps down the scrumptious mite and then"
-        print "falls back asleep..."
+        s$="The Australian dinosaur chomps down the scrumptious mite and then"
+        cr=1:dc=14:gosub draw_text
+        s$="falls back asleep..."
+        cr=1:dc=14:gosub draw_text
       bend
       if current_room% = THAILAND then begin
-        print "The Thai dinosaur gracefully dines on the crying-tiger, and "
-        print "then raises its clasped paws to its forehead to wai in thanks."
+        s$="The Thai dinosaur gracefully dines on the crying-tiger, and "
+        cr=1:dc=14:gosub draw_text
+        s$="then raises its clasped paws to its forehead to wai in thanks."
+        cr=1:dc=14:gosub draw_text
       bend
       if current_room% = TURKEY then begin
-        print "The Turkish dinosaur enthusiastically rips into the tasty fainted-eggplant!"
+        s$="The Turkish dinosaur enthusiastically rips into the tasty fainted-eggplant!"
+        cr=1:dc=14:gosub draw_text
       bend
-      print "It drops a present for you to show its gratitude..."
+      s$="It drops a present for you to show its gratitude..."
+      cr=1:dc=14:gosub draw_text
       
       gosub drop_present
       fed_dino_count% = fed_dino_count% + 1
@@ -215,54 +266,84 @@ goto main
 
 .check_we_have_all_computer_items
 '--------------------------------
-  print "Onion cake looks over your inventory..."
-  sleep 2
+  s$="Onion cake looks over your inventory..."
+  cr=1:dc=14:gosub draw_text
+  sleep 1
   missing%=0
   for z = 0 to 3
     tok$ = left$(present$(z), 3)
     gosub find_in_inventory
     if res%=0 then begin
-      print "'Hmm... You seem to be missing a ";present$(z);"...'"
+      s$="'Hmm... You seem to be missing a "
+      cr=0:dc=2:gosub draw_text
+      s$=present$(z)
+      cr=0:dc=3:gosub draw_text
+      s$="...'"
+      cr=1:dc=2:gosub draw_text
       missing%=1
+      sleep 1
     bend
   next z
 
   if missing%=1 then begin
     res%=0
-    print
-    print "I'm afraid this means that I need to shoot you now!"
-    print
-    print "BANG!"
+    s$="":cr=1:gosub draw_text
+    s$="'I am afraid this means that I need to shoot you now!'"
+    cr=1:dc=2:gosub draw_text
+    sleep 1.5
+    s$="":cr=1:gosub draw_text
+    s$="BANG!"
+    cr=1:dc=10:gosub draw_text
+    sleep 1.5
     return
   bend
 
-  print "'Looks like you've got it all...'"
-  print "'Now, demonstrate your MEGA65 coding skills to me, otherwise...'"
-  gosub press_a_key
+  s$="'Looks like you've got it all...'"
+  cr=1:dc=2:gosub draw_text
+  sleep 1
+  s$="'Now, demonstrate your MEGA65 coding skills to me, otherwise...'"
+  cr=1:dc=2:gosub draw_text
+  sleep 2
+
   res% = 1
   return
 
 .captured_by_onion_cake
 '----------------------
-  print "Upon hearing your melodious whistling, Onion Cake arrives, holding you"
-  print "at gunpoint, and forcefully escorting you to his dungeon in Germany..."
+  s$="Upon hearing your melodious whistling, Onion Cake arrives, holding you"
+  cr=1:dc=14:gosub draw_text
+  s$="at gunpoint, and forcefully escorting you to his dungeon in Germany..."
+  cr=1:dc=14:gosub draw_text
   current_room% = GERMANY
-  gosub press_a_key
+  sleep 2
 
-  print "'I finally caught the thief that stole my MEGA65!', Onion Cake exclaims!"
-  print
-  print "'If you show me your programming skills I will release you!' he offers."
-  print
-  print "'If not, I will shoot you!'"
-  gosub press_a_key
+  screen clr 0
+  s$="'I finally caught the thief that stole my MEGA65!'"
+  cr=0:dc=2:gosub draw_text
+  s$=", Onion Cake exclaims!"
+  cr=1:dc=14:gosub draw_text
+  s$="":cr=1:gosub draw_text
+  sleep 1
+
+  s$="'If you show me your programming skills I will release you!'"
+  cr=0:dc=2:gosub draw_text
+  s$=" he offers."
+  cr=1:dc=14:gosub draw_text
+  s$="":cr=1:gosub draw_text
+  sleep 1.5
+
+  s$="'If not, I will shoot you!'"
+  cr=1:dc=2:gosub draw_text
+
+  sleep 2
 
   gosub check_we_have_all_computer_items
-  if res%=0 then game_over%=1:gosub press_a_key:return
+  if res%=0 then game_over%=1:return
   return
 
 .type_line
 '---------
-  input a$
+  gosub get_input_to_a$
   return
 
 .assess_line
@@ -270,14 +351,23 @@ goto main
   if a$=prog$(finished_lines%) then begin
     finished_lines% = finished_lines% + 1
     if finished_lines%=4 then begin
-      print "'Well done, you completed the program!'"
+      s$="'Well done, you completed the program!'"
+      cr=1:dc=2:gosub draw_text
     bend:else begin
-      print "'Good, now for the next line!'"
+      s$="'Good, now for the next line!'"
+      cr=1:dc=2:gosub draw_text
     bend
   bend:else begin
-    print "'No no! You made mistakes on this line!', Onion Cake roars"
-    print "'Type it again properly, otherwise I will shoot you!'"
-    print prog$(finished_lines%)
+    s$="'No no! You made mistakes on this line!'"
+    cr=0:dc=2:gosub draw_text
+    s$=", Onion Cake roars"
+    cr=1:dc=14:gosub draw_text
+
+    s$="'Type it again properly, otherwise I will shoot you!'"
+    cr=1:dc=2:gosub draw_text
+
+    s$=prog$(finished_lines%)
+    cr=1:dc=12:gosub draw_text
   bend
   return
 
@@ -289,20 +379,33 @@ goto main
     gosub assess_line
   loop
 
-  print "'Impressive!', Onion Cake says with admiration!"
-  print "'You have proven yourself worthy to keep alive! I hereby release you!"
-  print "Remember your promise, otherwise I will find you and shoot you!'"
-  gosub press_a_key
+  s$="'Impressive!'"
+  cr=0:dc=2:gosub draw_text
+  s$=", Onion Cake says with admiration!"
+  cr=1:dc=14:gosub draw_text
+  sleep 1
+  s$="'You have proven yourself worthy to keep alive! I hereby release you!"
+  cr=1:dc=2:gosub draw_text
+  sleep 1.5
+  s$="Remember your promise, otherwise I will find you and shoot you!'"
+  cr=1:dc=2:gosub draw_text
+  sleep 1.5
 
-  print "You are free again! Congratulations, you won the game!"
+  s$="You are free again! Congratulations, you won the game!"
+  cr=1:dc=7:gosub draw_text
   game_over%=1
+  sleep 1.5
   return
 
 .use
 '---
   gosub extract_token
   gosub find_in_inventory
-  if res%=0 then print "You are not carrying that!":return
+  if res%=0 then begin
+    s$="You are not carrying that!"
+    cr=1:dc=14:gosub draw_text
+    return
+  bend
   if left$(b$,3) = tok$ then begin
     if tok$="whi" then gosub captured_by_onion_cake:return
     if tok$="meg" then begin
@@ -311,21 +414,32 @@ goto main
         game_over%=1
         return
       bend:else begin
-        print "How could you think of playing with your MEGA65 when there are hungry"
-        print "dinosaurs to feed?!"
+        s$="How could you think of playing with your MEGA65 when there are hungry"
+        cr=1:dc=14:gosub draw_text
+        s$="dinosaurs to feed?!"
+        cr=1:dc=14:gosub draw_text
         return
       bend
     bend
-    print "You cannot use that!"
+    s$="You cannot use that!"
+    cr=1:dc=14:gosub draw_text
   bend
   return
 
 .inventory
 '---------
-  print "You are carrying:"
-  if inv_count% = 0 then print "  - nothing...":else begin
+  s$="You are carrying:"
+  cr=1:dc=14:gosub draw_text
+
+  if inv_count% = 0 then begin
+    s$="  - nothing..."
+    cr=1:dc=12:gosub draw_text
+  bend:else begin
     for k=0 to inv_count%-1
-      print "  - ";inventory$(k)
+      s$="  - "
+      cr=0:dc=14:gosub draw_text
+      s$=inventory$(k)
+      cr=1:dc=3:gosub draw_text
     next k
   bend
 
@@ -345,6 +459,7 @@ goto main
 .draw_cursor
 '-----------
   pen 0,1
+  dc=1
   for dl=0 to 15
     line curx%*8,320+cury%*16+dl,curx%*8+7,320+cury%*16+dl
   next dl
@@ -360,7 +475,6 @@ goto main
 
 .safe_cury_inc
 '-------------
-  poke $d020,peek($d020)+1
   cury%=cury% + 1
   if cury% => 5 then begin
     gosub scroll_text_up
@@ -513,7 +627,7 @@ goto main
 
   screen clr 0
   offset% = rooms_offset%(current_room%)
-  gosub load
+  'gosub load
   return
 
 .main_game
@@ -523,7 +637,15 @@ goto main
 .next_input
   gosub user_input
 
-  if game_over%=1 then print:print "GAME OVER":sleep 2:return
+  if game_over%=1 then begin
+    s$="":cr=1:dc=14:gosub draw_text
+
+    s$="GAME OVER"
+    cr=1:dc=5:gosub draw_text
+    sleep 2
+    screen close
+    return
+  bend
   if current_room%<>previous_room% then previous_room%=current_room%:goto main_game
   goto next_input
   return
