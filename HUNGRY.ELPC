@@ -60,15 +60,44 @@ ROOM rooms(MAX_ROOMS) = [ {x5F}
      "N", "3", "aus.v", -16 ] {x5F}
 ]
 
+#declare has_attic_ram%=0
+#declare cached%(MAX_ROOMS),offs
+
 #declare prog$(7), finished_lines%=0
 prog$(0)="10 print "+chr$(34)+"i promise to onion cake that i will"+chr$(34)
 prog$(1)="20 print "+chr$(34)+"- always write beautiful mega65 programs"+chr$(34)
 prog$(2)="30 print "+chr$(34)+"- make use of delicious petscii characters"+chr$(34)
 prog$(3)="40 print "+chr$(34)+"- make beautiful sid music with the 'play' command"+chr$(34)
 
-border 0:background 0:print chr$(14);
+border 0:background 0:print chr$(14);chr$(30);
 
+gosub attic_ram_check
 goto main
+
+.attic_ram_check
+'---------------
+  print chr$(147);
+  poke $8000000, 35
+  if peek($8000000) <> 35 then begin
+    has_attic_ram% = 0
+    print "No attic ram detected (will not cache art)"
+    sleep 1
+    print chr$(147);
+    return
+  bend
+  poke $8000000, 36
+  if peek($8000000) <> 36 then begin
+    has_attic_ram% = 0
+    print "No attic ram detected (will not cache art)"
+    sleep 1
+    print chr$(147);
+    return
+  bend
+  
+  has_attic_ram%=1
+  print "Attic ram detected (will cache art)"
+  sleep 1
+  return
 
 .remove_from_loc
 '---------------
@@ -626,8 +655,13 @@ goto main
   cury% = 0
 
   screen clr 0
+  if has_attic_ram%=1 and cached%(current_room%)=1 then begin
+    gosub load_from_cache
+    return
+  bend
+
   offset% = rooms_offset%(current_room%)
-  'gosub load
+  gosub load
   return
 
 .main_game
@@ -733,6 +767,9 @@ goto main
   print "This is a simple text adventure game accompanied by vector art drawn "
   print "(slowly) via BASIC 65 :)"
   print
+  print "As BASIC 65 didn't come with a routine to draw filled irregular polygons,"
+  print "I had to write my own (in BASIC!), that made things even slower :)"
+  print
   print "Artwork will be cached after 1st draw attempt completes."
   print
   print "Type simple VERB NOUN strings to interact with the game."
@@ -740,6 +777,10 @@ goto main
   print
   print "You can abbreviate any word to the first 3 letters."
   print "  - E.g. TAK MEG"
+  print
+  print "NOTE: Current MEGA65 core has problems in 640x400 16 colour mode"
+  print "- Performs better in Xemu right now"
+  print "- Run xemu with '-fastclock 200' to speed things up!"
   gosub press_a_key
 
   print chr$(147);
@@ -766,6 +807,10 @@ goto main
   print "======="
   print "Coding and Music sequencing by Gurce Isikyildiz"
   print "Dino Artistry by Ayca Isikyildiz"
+  print "- You're welcome to donate to the artist to encourage her to contribute more"
+  print "  of her artwork to MEGA65 games!"
+  print "- Welcome to donate a few dollars over paypal to:"
+  print "  PayPal username: info@wombatistan.com"
   print
   print "Song cover credits"
   print "------------------"
@@ -790,7 +835,7 @@ goto main
   print "The inspiration for this game came from his 'Escape from Onion Cake' game:"
   print "- https://youtu.be/TvFXC_quuDo"
   print
-  print "His last-released version of the game no longer works with latest MEGA65 ROM"
+  print "His last-released version of the game no longer works with latest MEGA65 ROM:"
   print "- https://tinyurl.com/efoc-orig"
   print
   print "I've made some repairs/enhancements so that it runs on latest MEGA65 ROM here:"
@@ -923,6 +968,20 @@ goto main
   ret% = 1
   vec_size% = 3
   load_state%=-1
+  return
+
+.load_from_cache
+'---------------
+  if has_attic_ram% then begin
+    'z = $8000000 + $20000*current_room%
+    'for k = 0 to 7
+    'offs = k * $4000
+    'edma 0, $3e80, z+offs, $40000+offs
+    'next k
+    edma 0, 0, $8000000 + $20000*current_room%, $40000
+    edma 0, 0, $8000000 + $20000*current_room% + $10000, $50000
+  bend
+  'palette restore
   return
 
 .load
@@ -1072,6 +1131,12 @@ goto main
 .nxt_lp
   loop
   dclose #2
+
+  if has_attic_ram% then begin
+    edma 0, 0, $40000, $8000000 + $20000*current_room%
+    edma 0, 0, $50000, $8000000 + $20000*current_room% + $10000
+    cached%(current_room%) = 1
+  bend
 
   return
 ÿ
