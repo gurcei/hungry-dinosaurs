@@ -11,6 +11,8 @@
 
 #declare curx%,cury%, s$, cr, dc, dk, dl, offset%, line$, a, valid%, sk
 
+#declare DEBUG=1
+
 #declare load_state%
 #declare ret%, fill_state%
 #define COLOUR = 63
@@ -37,6 +39,8 @@ present$(3) = "program-listing"
 
 #declare map_loc_to_objs$(4,2)
 #declare map_idx%
+
+#declare onion% = 0
 
 #define GERMANY=0
 #define TURKEY=1
@@ -343,30 +347,46 @@ goto main
   cr=1:dc=14:gosub draw_text
   s$="at gunpoint, and forcefully escorting you to his dungeon in Germany..."
   cr=1:dc=14:gosub draw_text
+
+  if DEBUG=0 then begin
+    onion% = 1 : gosub load
+  bend:else begin
+    inventory$(0)="mega65"
+    inv_count%=1
+  bend
+
   current_room% = GERMANY
-  sleep 2
+  if DEBUG=0 then begin
+    sleep 2
+  bend
 
-  screen clr 0
-  s$="'I finally caught the thief that stole my MEGA65!'"
-  cr=0:dc=2:gosub draw_text
-  s$=", Onion Cake exclaims!"
-  cr=1:dc=14:gosub draw_text
-  s$="":cr=1:gosub draw_text
-  sleep 1
+  gosub show_room_graphic
 
-  s$="'If you show me your programming skills I will release you!'"
-  cr=0:dc=2:gosub draw_text
-  s$=" he offers."
-  cr=1:dc=14:gosub draw_text
-  s$="":cr=1:gosub draw_text
-  sleep 1.5
+  if DEBUG=0 then begin
+    s$="'I finally caught the thief that stole my MEGA65!'"
+    cr=0:dc=2:gosub draw_text
+    s$=", Onion Cake exclaims!"
+    cr=1:dc=14:gosub draw_text
+    s$="":cr=1:gosub draw_text
+    sleep 1.5
 
-  s$="'If not, I will shoot you!'"
-  cr=1:dc=2:gosub draw_text
+    s$="'If you show me your programming skills I will release you!'"
+    cr=0:dc=2:gosub draw_text
+    s$=" he offers."
+    cr=1:dc=14:gosub draw_text
+    s$="":cr=1:gosub draw_text
+    sleep 2
 
-  sleep 2
+    s$="'If not, I will shoot you!'"
+    cr=1:dc=2:gosub draw_text
 
-  gosub check_we_have_all_computer_items
+    sleep 2
+
+    gosub check_we_have_all_computer_items
+  bend:else begin
+    return
+  bend
+
   if res%=0 then game_over%=1:return
   return
 
@@ -402,7 +422,8 @@ goto main
 
 .start_mega65
 '------------
-' draw mega65+listing
+  ' draw_mega65_listing
+
   do while finished_lines% < 4
     gosub type_line
     gosub assess_line
@@ -666,6 +687,9 @@ goto main
 
 .main_game
 '---------
+  ' TODO: remove debug
+  gosub captured_by_onion_cake
+
   gosub show_room_graphic
   gosub show_room_text
 .next_input
@@ -694,6 +718,7 @@ goto main
   missing% = 0
   game_over% = 0
   finished_lines% = 0
+  onion%=0
 
   map_loc_to_objs$(TURKEY,0) = "rice-plant"
   map_loc_to_objs$(THAILAND,0) = "carnivorous-mite"
@@ -808,7 +833,7 @@ goto main
   print "Coding and Music sequencing by Gurce Isikyildiz"
   print "Dino Artistry by Ayca Isikyildiz"
   print "- You're welcome to donate to the artist to encourage her to contribute more"
-  print "  of her artwork to MEGA65 games!"
+  print "  of her artwork to future MEGA65 games!"
   print "- Welcome to donate a few dollars over paypal to:"
   print "  PayPal username: info@wombatistan.com"
   print
@@ -988,7 +1013,12 @@ goto main
 '----
   ' for now, just load from a single hard-coded file
   load_state% = -4
-  dopen #2,(rooms_vart$(current_room%)),r,u8
+  if onion% = 1 then begin
+    dopen #2,"onion.v",r,u8
+    offset%=20
+  bend:else begin
+    dopen #2,(rooms_vart$(current_room%)),r,u8
+  bend
   do
     get#2, k:print "rd=";k;
     if st then exit
@@ -1132,11 +1162,12 @@ goto main
   loop
   dclose #2
 
-  if has_attic_ram% then begin
+  if has_attic_ram% and onion%=0 then begin
     edma 0, 0, $40000, $8000000 + $20000*current_room%
     edma 0, 0, $50000, $8000000 + $20000*current_room% + $10000
     cached%(current_room%) = 1
   bend
+  onion% = 0
 
   return
 ÿ

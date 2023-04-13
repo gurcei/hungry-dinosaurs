@@ -4,7 +4,7 @@ import re
 import struct
 
 def read_xml():
-    return ET.parse('UZBEKagain.svg').getroot()
+    return ET.parse('tiger.svg').getroot()
 
 LINE    = 0
 CIRCLE  = 1
@@ -18,9 +18,20 @@ scalex = 640/64000
 scaley = 320 / 32047
 
 map_svg_to_m65_clr = {
-    'none': 3,
+    'none': -1,
     'black': 0,
+    'white': 1,
+    '#880000': 2,
+    '#37322B': 3,
+    '#373937': 3,
+    '#695336': 3,
+    '#6E491D': 3,
+    '#FF4800': 3,
+    '#664400': 9,
+    '#DD8855': 8,
     '#FF7777': 10,
+    '#333333': 11,
+    '#0088FF': 14,
     '#BBBBBB': 15
 }
 
@@ -180,7 +191,7 @@ xml = read_xml()
 
 colours = extract_colours(xml)
 
-outfile = open('uzbek.v', 'wb')
+outfile = open('tiger.v', 'wb')
 outfile.write(b'VEC')
 
 # iterate over objects (polygons/paths)
