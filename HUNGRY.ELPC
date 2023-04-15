@@ -9,9 +9,28 @@
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
 
+  ' music related vars
+  ' ------------------
+  #declare music_chunk_index     ' old t
+  #declare bar_index             ' old tt
+  ' #declare map_bar_to_chunk(11)  ' old m()
+  #declare v1$(11), v2$(11), v3$(11), v4$(11), v5$(11), v6$(11)
+
+#declare s%
+
+#struct SONG tmpo%, bars%
+
+SONG songs(4) = [ {x5F}
+  [ 15, 10 ], {x5F}
+  [ 15, 10 ], {x5F}
+  [ 35, 10 ], {x5F}
+  [ 15, 10 ], {x5F}
+  [ 15, 10 ]  {x5F}
+]
+
 #declare curx%,cury%, s$, cr, dc, dk, dl, offset%, line$, a, valid%, sk
 
-#declare DEBUG=1
+#declare DEBUG=0
 
 #declare load_state%
 #declare ret%, fill_state%
@@ -40,7 +59,7 @@ present$(3) = "program-listing"
 #declare map_loc_to_objs$(4,2)
 #declare map_idx%
 
-#declare onion% = 0
+#declare onion% = 0, onion$
 
 #define GERMANY=0
 #define TURKEY=1
@@ -63,6 +82,8 @@ ROOM rooms(MAX_ROOMS) = [ {x5F}
  [ "An inebriated Australian dinosaur rests peacefully.", {x5F}
      "N", "3", "aus.v", -16 ] {x5F}
 ]
+
+s% = THAILAND
 
 #declare has_attic_ram%=0
 #declare cached%(MAX_ROOMS),offs
@@ -349,7 +370,7 @@ goto main
   cr=1:dc=14:gosub draw_text
 
   if DEBUG=0 then begin
-    onion% = 1 : gosub load
+    onion% = 1 : onion$="onion.v" : gosub load
   bend:else begin
     inventory$(0)="mega65"
     inv_count%=1
@@ -414,17 +435,21 @@ goto main
 
     s$="'Type it again properly, otherwise I will shoot you!'"
     cr=1:dc=2:gosub draw_text
-
-    s$=prog$(finished_lines%)
-    cr=1:dc=12:gosub draw_text
   bend
   return
 
 .start_mega65
 '------------
   ' draw_mega65_listing
+  onion% = 1 : onion$="mega65.v" : gosub load
 
   do while finished_lines% < 4
+    s$="Type: "
+    cr=0:dc=11:gosub draw_text
+
+    s$=prog$(finished_lines%)
+    cr=1:dc=12:gosub draw_text
+
     gosub type_line
     gosub assess_line
   loop
@@ -537,7 +562,11 @@ goto main
   gosub draw_cursor
   line$=""
   do
-    get key a$
+.keyloop
+    get a$
+    gosub poll_play
+    if a$="" then goto keyloop
+
     a=asc(a$)
     valid%=1
     if (a<32 or a>127) and a<>13 and not (a=20 and len(line$)>0) then valid%=0
@@ -676,6 +705,8 @@ goto main
   cury% = 0
 
   screen clr 0
+
+  gosub init_music
   if has_attic_ram%=1 and cached%(current_room%)=1 then begin
     gosub load_from_cache
     return
@@ -687,8 +718,9 @@ goto main
 
 .main_game
 '---------
-  ' TODO: remove debug
-  gosub captured_by_onion_cake
+  if DEBUG=1 then begin
+    gosub captured_by_onion_cake
+  bend
 
   gosub show_room_graphic
   gosub show_room_text
@@ -842,8 +874,8 @@ goto main
   print "Australia - ";chr$(34);"Skippy the Bush Kangaroo";chr$(34);
     print " - Eric Jupp"
   print "Germany - ";chr$(34);"99 Luftballons";chr$(34);" - NENA"
-  print "Thailand - ";chr$(34);"Khaek Boratet Sawng Chan";chr$(34);
-    print " - Unknown"
+  print "Thailand - ";chr$(34);"Khleun Grathop Fang (Waves crash to the shore)";chr$(34);
+    print " - King Prajadhipok"
   ' youtu.be/HLqlZ2jGbDg
   print "Turkey - ";chr$(34);"Hatcam Cikmis Gul Dalina";chr$(34);
     print " - Unknown"
@@ -979,6 +1011,7 @@ goto main
   gosub find_ymin_ymax
   for y%=ymin% to ymax%
     gosub draw_horizontal_intersects
+    gosub poll_play
   next y%
   return
 
@@ -1009,12 +1042,22 @@ goto main
   'palette restore
   return
 
+.boxfill
+'-------
+  k=1
+  if by0% > my% then k=-1
+  for y% = by0% to my% step k
+    line bx0%, y%, mx%, y%
+    gosub poll_play
+  next y%
+  return
+
 .load
 '----
   ' for now, just load from a single hard-coded file
   load_state% = -4
   if onion% = 1 then begin
-    dopen #2,"onion.v",r,u8
+    dopen #2,(onion$),r,u8
     offset%=20
   bend:else begin
     dopen #2,(rooms_vart$(current_room%)),r,u8
@@ -1127,7 +1170,7 @@ goto main
       get#2,m1% : m1% = m1% and 255
       my% = m0% + (m1% << 8) + offset% : if my%<0 then begin:my%=0:bend
 
-      box bx0%, by0%, mx%, my%, fill_state%
+      if fill_state%<>0 then gosub boxfill:else box bx0%, by0%, mx%, my%
 
       load_state% = -1
       goto nxt_lp
@@ -1159,6 +1202,7 @@ goto main
     bend
 
 .nxt_lp
+  ' gosub poll_play
   loop
   dclose #2
 
@@ -1170,4 +1214,101 @@ goto main
   onion% = 0
 
   return
+
+.init_music
+'==========
+  play
+  tempo songs_tmpo%(s%)
+
+  bar_index=0
+
+  if s% = 2 then gosub thai_song
+  return
+
+.poll_play
+'---------
+  if rplay(1) then return
+
+  music_chunk_index=bar_index ' map_bar_to_chunk(bar_index)
+  
+  play v1$(music_chunk_index),v2$(music_chunk_index),v3$(music_chunk_index)
+  sleep .05
+  play ,,,v4$(music_chunk_index),v5$(music_chunk_index),v6$(music_chunk_index)
+
+  bar_index=bar_index+1
+  if bar_index=songs_bars%(s%) then bar_index=0
+  return
+
+.thai_song
+'---------
+v1$( 0)="t6m1o4hcccc icccc cccc o3gggg gggg"
+v2$( 0)="t1o3w cccc"
+v3$( 0)="t1o3w eeee"
+v4$( 0)="t6m1o5hcccc sricccc cccc o4gggg gggg"
+v5$( 0)="t1o3w gggg"
+v6$( 0)="t1o4w cccc"
+
+v1$( 1)="t6o3i aaaaaaaa gggggggg o4cccccccc o3gggg gggg"
+v2$( 1)="t1o3w cccc"
+v3$( 1)="t1o3w ffee"
+v4$( 1)="t6o4s riaaaaaaaa gggggggg o5cccccccc o4gggg gggg"
+v5$( 1)="t1o3w aagg"
+v6$( 1)="t1o4w cccc"
+
+v1$( 2)="t6o3i aaaaaaaa o4ccccccccc dddddddd eeeeeeee"
+v2$( 2)="t1o3w cccc"
+v3$( 2)="t1o3w ffee"
+v4$( 2)="t6o4s riaaaaaaaa o5ccccccccc dddddddd eeeeeeee"
+v5$( 2)="t1o3w aagg"
+v6$( 2)="t1o4w cccc"
+
+v1$( 3)="t6o4 idddd gggg eeer  eeer eeeeeeee eeeeeeee"
+v2$( 3)="t1o3w ddcc"
+v3$( 3)="t1o3w ggee"
+v4$( 3)="t6o5sr idddd gggg eeer  eeer eeeeeeee eeeeeeee"
+v5$( 3)="t1o3w bbgg"
+v6$( 3)="t1o4w ddcc"
+
+v1$( 4)="t6o4i eeee gggg eeee dddd cccccccc dddddddd"
+v2$( 4)="t1o3w cccc"
+v3$( 4)="t1o3w eeff"
+v4$( 4)="t6o5sr ieeee gggg eeee dddd cccccccc dddddddd"
+v5$( 4)="t1o3w ggaa"
+v6$( 4)="t1o4w cccc"
+
+v1$( 5)="t6o4i eeeeeeee dddddddr dddddddd ddddddrr"
+v2$( 5)="t1o3w ccdd"
+v3$( 5)="t1o3w eegg"
+v4$( 5)="t6o5sr ieeeeeeee dddddddr dddddddd ddddddrr"
+v5$( 5)="t1o3w ggbb"
+v6$( 5)="t1o4w ccdd"
+
+v1$( 6)="t6o3i gggggggg wr iaaaaaaaa wr io4cccccccc hr qo3fg"
+v2$( 6)="t1o3w cccc dd"
+v3$( 6)="t1o3w ffee ff"
+v4$( 6)="t7o4sr igggggggg wr iaaaaaaaa wr io5cccccccc q.r qo4fg"
+v5$( 6)="t1o3w aagg aa"
+v6$( 6)="t1o4w cccc dd"
+
+v1$( 7)="t6o3h ao4ced icccccccc o3hag ho4 cccc icccccccr cccccccr"
+v2$( 7)="t1o3w dd cc cc cc"
+v3$( 7)="t1o3w gg ee ee ff"
+v4$( 7)="t6o4h ao5cedsr icccccccsc o4hag ho5 ccccsr icccccccr cccccccr"
+v5$( 7)="t1o3w bb gg gg aa"
+v6$( 7)="t1o4w dd cc cc cc"
+
+v1$( 8)="t6o3h rga o4cdc o3ba igggggggg qrred hcdef i gggggggg gggggggg gggggggg gggggggr"
+v2$( 8)="t1o3w cc cc cc dd cc cc"
+v3$( 8)="t1o3w ee ff ee gg ee ff"
+v4$( 8)="t6o4h rga o5cdc o4basr igggggggsg qrred hcdefsr i gggggggg gggggggg gggggggg gggggggr"
+v5$( 8)="t1o3w gg aa gg bb gg aa"
+v6$( 8)="t1o4w cc cc cc dd cc cc"
+
+v1$( 9)="t6o3h gggg igggggggr gggggggr gggggggg gggggggr"
+v2$( 9)="t1o3w cc dd cc"
+v3$( 9)="t1o3w ee gg ee"
+v4$( 9)="t6o4h ggggsr igggggggr gggggggr gggggggg gggggggr"
+v5$( 9)="t1o3w gg bb gg"
+v6$( 9)="t1o4w cc dd cc"
+return
 ÿ
