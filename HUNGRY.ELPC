@@ -1237,7 +1237,10 @@ goto main
 '==========
   if s% <> current_room% then begin
     s% = current_room%
-    play
+    play:play "","","","","",""
+    for k = 0 to 10
+     v1$(k)="":v2$(k)="":v3$(k)="":v4$(k)="":v5$(k)="":v6$(k)=""
+    next k
     tempo songs_tmpo%(s%)
 
     bar_index=0
@@ -1245,6 +1248,7 @@ goto main
     s% = current_room%
     if s% = 0 then gosub german_song
     if s% = 2 then gosub thai_song
+    if s% = 3 then gosub viet_song
     if s% = 4 then gosub aus_song
   bend
   return
@@ -1346,66 +1350,30 @@ return
 '--------
 v1$( 0)="o5ifed q.c rie q.g r io4go5cccqcie qgieqgie"
 v2$( 0)="t0o2q.r .c iggg o1q.g o2iddd q.c iggg o1q.g o2iddd"
-v3$( 0)=""
-v4$( 0)=""
-v5$( 0)=""
-v6$( 0)=""
 
 v1$( 1)="o5qfieqdif qeidqcie qdico4qbia q.g"
 v2$( 1)="t0o2q.f iaaa q.c iggg o1q.go2 iddd o1q.g"
-v3$( 1)=""
-v4$( 1)=""
-v5$( 1)=""
-v6$( 1)=""
 
 v1$( 2)="o5ifed q.c rie q.g r io4go5cccqcie qgieqgie"
 v2$( 2)="t0o2q.r .c iggg o1q.g o2iddd q.c iggg o1q.g o2iddd"
-v3$( 2)=""
-v4$( 2)=""
-v5$( 2)=""
-v6$( 2)=""
 
 v1$( 3)="o5qfieqdif qeidqcie qdieq#fia gfd o4bgd"
 v2$( 3)="t0o2q.f iaaa q.c iggg o2q.d iaaa o1q.g"
-v3$( 3)=""
-v4$( 3)=""
-v5$( 3)=""
-v6$( 3)=""
 
 v1$( 4)="o5ibgdbgd a#fda#fd gecgec qdieq#fia bgdbgd a#fda#fd o6qco5ibo6qcieq.d.#f"
 v2$( 4)="m0t0o2q.d iggg q.d iaaa q.c iggg q.d iaaa q.d iggg q.d iaaa q.c iggg h.d"
-v3$( 4)=""
-v4$( 4)=""
-v5$( 4)=""
-v6$( 4)=""
 
 v1$( 5)="o5qafio4m1cdedcgfe o5qge o4icdedco3bag"
 v2$( 5)="m0t0o2q.c iaaa q.c iaaa q.c iggg q.c iggg"
-v3$( 5)=""
-v4$( 5)=""
-v5$( 5)=""
-v6$( 5)=""
 
 v1$( 6)="o5qf.did q.e#fia q.g ifgf efe ded"
 v2$( 6)="t0o1q.g o2iddd o1q.g o2iddd o1q.g o2iddd o1q.g o2iddd"
-v3$( 6)=""
-v4$( 6)=""
-v5$( 6)=""
-v6$( 6)=""
 
 v1$( 7)="o5qafio4m1cdedcgfe o5qge o4icdedco3bag"
 v2$( 7)="m0t0o2q.c iaaa q.c iaaa q.c iggg q.c iggg"
-v3$( 7)=""
-v4$( 7)=""
-v5$( 7)=""
-v6$( 7)=""
 
 v1$( 8)="o5qqf.did q.eico4bo5d co4go5co4egeq.c"
 v2$( 8)="t0o1q.g o2iddd o1q.g o2iddd o2q.c iggg o2q.c"
-v3$( 8)=""
-v4$( 8)=""
-v5$( 8)=""
-v6$( 8)=""
 return
 
 .german_song
@@ -1439,6 +1407,40 @@ v3$(4) = v3$(1)
 v1$(5) = v1$(0)
 v2$(5) = v2$(3)
 v3$(5) = v3$(3)
+
+return
+
+.viet_song
+'---------
+v1$(0)="t2o5 o5qgp6 iag idfqd"
+v2$(0)=""
+
+v1$(1)="o5p6m1 wg qr fsfgif qe iesfeie o4p9gp6q#ahi#a"
+v2$(1)=""
+
+v1$(2)="t2o5p6m1 qrp0scp6dcd p0cp6id sr idp3#f p6 o4q.g o5p8if p6qo4sp9#aa#a#b p6q#a"
+v2$(2)=""
+
+v1$(3)="t2o5qrsci.d sci.d sp9cdfg p8o4h.gqr o5qgiag idfqd"
+v2$(3)=""
+
+v1$(4)="p6t2o5 q.gsag qf o4.#air o5sp0dp3#dd#d o4p8ig#ao5cd"
+v2$(4)=""
+
+v1$(5)="t2o4 q.g sp5ga ifp2g qf r p6fao5c o4q.a ig sp2fefe p6qg r iga sp3fefe qd wg"
+v2$(5)=""
+
+v1$(6)="t2o5 p0qgp6iag dfqd .gsag qaq.a irq #a#a so6p8co5#ao6cd"
+v2$(6)=""
+
+v1$(7)="t2o5 q.gsag qfq.f ir qa iao6c cd o5p8q.dic qd ha iao6ccd o5p0dp6f wg"
+v2$(7)=""
+
+v1$(8)="t2o5p6qfifg sfgfg o4ip0#ao5p8d o4q.gsag qf.gir o5qdidfqd.dico4s#ag#ago5scp3#cc#cqc"
+v2$(8)=""
+
+v1$(9)="t2o5p6rqco4#ao5 sco4#ao5cd o4q.gsag qf.fir qaia qo5csco4#ao5cdco4#ao5cd o4wg"
+v2$(9)=""
 
 return
 ÿ
