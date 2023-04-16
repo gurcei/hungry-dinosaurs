@@ -18,14 +18,11 @@
   ' #declare map_bar_to_chunk(11)  ' old m()
   #declare v1$(11), v2$(11), v3$(11), v4$(11), v5$(11), v6$(11)
 
-' #struct MAP_BAR chunk%
-
-' MAP_BAR mapbar(1) = [ {x5F}
-'  [ 0 ], [ 1 ], [ 2 ], [ 3 ], {x5F}
-'  [ 2 ], [ 4 ], [ 5 ], [ 7 ], {x5F}
-'  [ 8 ], [ 8 ], [ 5 ], [ 7 ], {x5F}
-'  [ 8 ], [ 8 ] {x5F}
-']
+#declare map(14)
+map(0)=0:map(1)=1:map(2)=2:map(3)=3
+map(4)=2:map(5)=4:map(6)=5:map(7)=7
+map(8)=8:map(9)=8:map(10)=5:map(11)=7
+map(12)=8:map(13)=8
 
 #declare s%
 
@@ -33,7 +30,7 @@
 
 SONG songs(4) = [ {x5F}
   [ 18, 6, 1 ], {x5F}
-  [ 15, 10, 1 ], {x5F}
+  [ 18, 14, 1 ], {x5F}
   [ 35, 10, 0 ], {x5F}
   [ 15, 10, 1 ], {x5F}
   [ 20, 9, 1 ]  {x5F}
@@ -621,21 +618,23 @@ goto main
 '----------
   gosub get_input_to_a$
 
-  if a$="n" and north%<>-1 then current_room%=north%
-  if a$="s" and south%<>-1 then current_room%=south%
-  if a$="e" and east%<>-1 then current_room%=east%
-  if a$="w" and west%<>-1 then current_room%=west%
-  if a$="i" then gosub inventory
-  if a$="l" then gosub show_room_text
-  if a$="x" then stop
+  if a$="n" and north%<>-1 then current_room%=north%:return
+  if a$="s" and south%<>-1 then current_room%=south%:return
+  if a$="e" and east%<>-1 then current_room%=east%:return
+  if a$="w" and west%<>-1 then current_room%=west%:return
+  if a$="i" then gosub inventory:return
+  if a$="l" then gosub show_room_text:return
+  if a$="quit" or a$="exit" then game_over%=1:return
 
   gosub extract_token
-  if tok$="loo" then gosub show_room_text
-  if tok$="tak" or tok$="get" then gosub take
-  if tok$="inv" then gosub inventory
-  if tok$="hit" then gosub hit
-  if tok$="giv" then gosub give
-  if tok$="use" then gosub use
+  if tok$="loo" then gosub show_room_text:return
+  if tok$="tak" or tok$="get" then gosub take:return
+  if tok$="inv" then gosub inventory:return
+  if tok$="hit" then gosub hit:return
+  if tok$="giv" then gosub give:return
+  if tok$="use" then gosub use:return
+
+  s$="Sorry, I don't understand that command" : cr=1 : dc=14 : gosub draw_text
 
   return
 
@@ -732,7 +731,7 @@ goto main
   gosub init_music
 
   'TODO: remove
-  return
+  'return
 
   if has_attic_ram%=1 and cached%(current_room%)=1 then begin
     gosub load_from_cache
@@ -778,6 +777,7 @@ goto main
   game_over% = 0
   finished_lines% = 0
   onion%=0
+  s%=-1
 
   map_loc_to_objs$(TURKEY,0) = "rice-plant"
   map_loc_to_objs$(THAILAND,0) = "carnivorous-mite"
@@ -1268,6 +1268,8 @@ goto main
   if rplay(1) then return
 
   music_chunk_index=bar_index ' map_bar_to_chunk(bar_index)
+
+  if s% = TURKEY then music_chunk_index=map(bar_index)
   
   if songs_cpy%(s%)=1 then begin
     play v1$(music_chunk_index),v2$(music_chunk_index),v3$(music_chunk_index)
@@ -1456,7 +1458,7 @@ return
 
 .turk_song
 '---------
-v1$( 0)="o5t6 ip0fp3ep0fp3gp0fp3gp0ep3f p0sdp3#dd#d p0idc dp3s#dr ip0dr"
+v1$( 0)="o5t6 ip0fp3ep0fp3gp0fp3gp0ep3f p0sdp3#dd#d p0idc dp3s#dr qp0dr"
 v2$( 0)="o2t5 p0o2qcrgr o1gr ggr"
 v3$( 0)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4 qgg sgrgr"
 v1$(0)=v1$(0)+v1$(0)
@@ -1488,7 +1490,7 @@ v1$( 4)="o4t6 q.a ig qgg wg qr"
 v2$( 4)="o2t5 qcrgr o1gro2ddd"
 v3$( 4)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
 
-v1$( 5)="o5t7 p7 qrr gg p0sfip3.gp0qg sfip3.gp0gqg"
+v1$( 5)="o5t7 p7 qrr gg p0sfip3.gp0qg sfip3.gp0qgg"
 v2$( 5)="o1t5 qgro2dr o1gro2drd"
 v3$( 5)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
 
@@ -1499,7 +1501,7 @@ v1$(5)=v1$(5)+v1$(6)
 v2$(5)=v2$(5)+v2$(6)
 v3$(5)=v3$(5)+v3$(6)
 
-v1$( 7)="o5t7p0 i#a#aq#a sp0ap3i.#a sp0ap3i.#a qaa hg r"
+v1$( 7)="o5t7p0 i#a#aq#a sp0ap3i.#a sp0ap3i.#a qaa hg qr"
 v2$( 7)="o1t5 p0qfro2cr o1gro2drd"
 v3$( 7)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
 v1$(7)=v1$(7)+v1$(6)
