@@ -18,6 +18,15 @@
   ' #declare map_bar_to_chunk(11)  ' old m()
   #declare v1$(11), v2$(11), v3$(11), v4$(11), v5$(11), v6$(11)
 
+' #struct MAP_BAR chunk%
+
+' MAP_BAR mapbar(1) = [ {x5F}
+'  [ 0 ], [ 1 ], [ 2 ], [ 3 ], {x5F}
+'  [ 2 ], [ 4 ], [ 5 ], [ 7 ], {x5F}
+'  [ 8 ], [ 8 ], [ 5 ], [ 7 ], {x5F}
+'  [ 8 ], [ 8 ] {x5F}
+']
+
 #declare s%
 
 #struct SONG tmpo%, bars%, cpy%
@@ -1247,6 +1256,7 @@ goto main
 
     s% = current_room%
     if s% = 0 then gosub german_song
+    if s% = 1 then gosub turk_song
     if s% = 2 then gosub thai_song
     if s% = 3 then gosub viet_song
     if s% = 4 then gosub aus_song
@@ -1412,35 +1422,100 @@ return
 
 .viet_song
 '---------
-v1$(0)="t2o5 o5qgp6 iag idfqd"
-v2$(0)=""
+v1$( 0)="t2o5 qgp6 iag idfqd"
+v2$( 0)=""
 
-v1$(1)="o5p6m1 wg qr fsfgif qe iesfeie o4p9gp6q#ahi#a"
-v2$(1)=""
+v1$( 1)="o5p6m1 wg qr fsfgif qe iesfeie o4p9gp6q#ahi#a"
+v2$( 1)="t2o2wgg c"
 
-v1$(2)="t2o5p6m1 qrp0scp6dcd p0cp6id sr idp3#f p6 o4q.g o5p8if p6qo4sp9#aa#a#b p6q#a"
-v2$(2)=""
+v1$( 2)="t2o5p6m1 qrp0scp6dcd p0cp6id sr idp3#f p6 o4q.g o5p8if p6qo4sp9#aa#a#b p6q#a"
+v2$( 2)="o2wcc"
 
-v1$(3)="t2o5qrsci.d sci.d sp9cdfg p8o4h.gqr o5qgiag idfqd"
-v2$(3)=""
+v1$( 3)="t2o5qrsci.d sci.d sp9cdfg p8o4h.gqr o5qgiag idfqd"
+v2$( 3)="o2wcgg"
 
-v1$(4)="p6t2o5 q.gsag qf o4.#air o5sp0dp3#dd#d o4p8ig#ao5cd"
-v2$(4)=""
+v1$( 4)="p6t2o5 q.gsag qf o4.#air o5sp0dp3#dd#d o4p8ig#ao5cd"
+v2$( 4)="o2wgg"
 
-v1$(5)="t2o4 q.g sp5ga ifp2g qf r p6fao5c o4q.a ig sp2fefe p6qg r iga sp3fefe qd wg"
-v2$(5)=""
+v1$( 5)="t2o4 q.g sp5ga ifp2g qf r p6fao5c o4q.a ig sp2fefe p6qg r iga sp3fefe qd wg"
+v2$( 5)="o2wgg dcg"
 
-v1$(6)="t2o5 p0qgp6iag dfqd .gsag qaq.a irq #a#a so6p8co5#ao6cd"
-v2$(6)=""
+v1$( 6)="t2o5 p0qgp6iag dfqd .gsag qaq.a irq #a#a so6p8co5#ao6cd"
+v2$( 6)="o2wg gf"
 
-v1$(7)="t2o5 q.gsag qfq.f ir qa iao6c cd o5p8q.dic qd ha iao6ccd o5p0dp6f wg"
-v2$(7)=""
+v1$( 7)="t2o5 q.gsag qfq.f ir qa iao6c cd o5p8q.dic qd ha iao6ccd o5p0dp6f wg"
+v2$( 7)="o2w#d f d #d g"
 
-v1$(8)="t2o5p6qfifg sfgfg o4ip0#ao5p8d o4q.gsag qf.gir o5qdidfqd.dico4s#ag#ago5scp3#cc#cqc"
-v2$(8)=""
+v1$( 8)="t2o5p6qfifgsfgfgo4ip0#ao5p8do4q.gsagqf.giro5qdidfqd.dico4s#ag#ago5scp3#cc#cqc"
+v2$( 8)="o2wgg#a#ao3c"
 
-v1$(9)="t2o5p6rqco4#ao5 sco4#ao5cd o4q.gsag qf.fir qaia qo5csco4#ao5cdco4#ao5cd o4wg"
-v2$(9)=""
+v1$( 9)="t2o5p6qco4#ao5 sco4#ao5cd o4q.gsag qf.fir qaia qo5csco4#ao5cdco4#ao5cd o4wg"
+v2$( 9)="o3h.c o2wg f g"
+
+return
+
+.turk_song
+'---------
+v1$( 0)="o5t6 ip0fp3ep0fp3gp0fp3gp0ep3f p0sdp3#dd#d p0idc dp3s#dr ip0dr"
+v2$( 0)="o2t5 p0o2qcrgr o1gr ggr"
+v3$( 0)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4 qgg sgrgr"
+v1$(0)=v1$(0)+v1$(0)
+v2$(0)=v2$(0)+v2$(0)
+v3$(0)=v3$(0)+v3$(0)
+
+v1$( 1)="o5t6 ip0cp3o4#a p0o5qc sdp3#p0dp3d#d qc r io4p0gp3a#ao5c so4p0#ao5p3co4p0#ao5p3c o4qa"
+v2$( 1)="o2t5 qcrgr o1grggr"
+v3$( 1)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+v1$(1)=v1$(1)+v1$(1)
+v2$(1)=v2$(1)+v2$(1)
+v3$(1)=v3$(1)+v3$(1)
+
+v1$( 2)="o5t6qrip0co4p3#ao5co4#ao5qcrip0o4gp3ao4p0#ao5p3c so4p0#ao5p3co4p0#ao5p3c qo4p0a"
+v2$( 2)="o2t5 qcrgr o1grggr"
+v3$( 2)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+v1$(2)=v1$(2)+v1$(2)
+v2$(2)=v2$(2)+v2$(2)
+v3$(2)=v3$(2)+v3$(2)
+
+v1$( 3)="o5t6 irp0#ddp4c o4p0#ao5p3cp0qd r ip0o4gp3a o4p0#ao5p3c so4p0#ao5p3co4p0#ao5p3c qo4a"
+v2$( 3)="o2t5 qcrgr o1grggr"
+v3$( 3)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+v1$(3)=v1$(3)+v1$(3)
+v2$(3)=v2$(3)+v2$(3)
+v3$(3)=v3$(3)+v3$(3)
+
+v1$( 4)="o4t6 q.a ig qgg wg qr"
+v2$( 4)="o2t5 qcrgr o1gro2ddd"
+v3$( 4)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+
+v1$( 5)="o5t7 p7 qrr gg p0sfip3.gp0qg sfip3.gp0gqg"
+v2$( 5)="o1t5 qgro2dr o1gro2drd"
+v3$( 5)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+
+v1$( 6)="o5t7qp0fiep3fp0sdp3#dp0dp3#dp0qcico4p3#ap0o5qc so4#ap3o5cp0o4#ap3o5c qo4ar"
+v2$( 6)="o1t5 qfro2cr crgrg"
+v3$( 6)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+v1$(5)=v1$(5)+v1$(6)
+v2$(5)=v2$(5)+v2$(6)
+v3$(5)=v3$(5)+v3$(6)
+
+v1$( 7)="o5t7p0 i#a#aq#a sp0ap3i.#a sp0ap3i.#a qaa hg r"
+v2$( 7)="o1t5 p0qfro2cr o1gro2drd"
+v3$( 7)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+v1$(7)=v1$(7)+v1$(6)
+v2$(7)=v2$(7)+v2$(6)
+v3$(7)=v3$(7)+v3$(6)
+
+v1$( 8)="o4t7 ip0#ap3o5qc icqcc p0o4i#ap3a p0#ao5p3c o4p0ap3#a p0gp3a qp0f"
+v2$( 8)="o2t5 qcrgr o1gro2drd"
+v3$( 8)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+
+v1$( 9)="o4t7qrip0#ap3ap0#ao5p3c p0o4qa sa#aa#a qghgqr"
+v2$( 9)="o1t5 qfro2cr o1gro2drd"
+v3$( 9)="o2t3 o2qc scrcr o4qg sgrgr o2qc scrcr o4qgg sgrgr"
+v1$(8)=v1$(8)+v1$(9)
+v2$(8)=v2$(8)+v2$(9)
+v3$(8)=v3$(8)+v3$(9)
 
 return
 ÿ
