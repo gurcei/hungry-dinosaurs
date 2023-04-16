@@ -8,6 +8,8 @@
 #declare current_room%, previous_room%
 #declare inventory$(10),inv_count%=0,inv_idx%=0
 #declare fed_dino_count% = 0
+#declare poll_cnt%=0
+#declare t1, delay
 
   ' music related vars
   ' ------------------
@@ -18,14 +20,14 @@
 
 #declare s%
 
-#struct SONG tmpo%, bars%
+#struct SONG tmpo%, bars%, cpy%
 
 SONG songs(4) = [ {x5F}
-  [ 15, 10 ], {x5F}
-  [ 15, 10 ], {x5F}
-  [ 35, 10 ], {x5F}
-  [ 15, 10 ], {x5F}
-  [ 15, 10 ]  {x5F}
+  [ 18, 6, 1 ], {x5F}
+  [ 15, 10, 1 ], {x5F}
+  [ 35, 10, 0 ], {x5F}
+  [ 15, 10, 1 ], {x5F}
+  [ 20, 9, 1 ]  {x5F}
 ]
 
 #declare curx%,cury%, s$, cr, dc, dk, dl, offset%, line$, a, valid%, sk
@@ -322,7 +324,7 @@ goto main
 '--------------------------------
   s$="Onion cake looks over your inventory..."
   cr=1:dc=14:gosub draw_text
-  sleep 1
+  delay=1:gosub pause
   missing%=0
   for z = 0 to 3
     tok$ = left$(present$(z), 3)
@@ -335,7 +337,7 @@ goto main
       s$="...'"
       cr=1:dc=2:gosub draw_text
       missing%=1
-      sleep 1
+      delay=1:gosub pause
     bend
   next z
 
@@ -344,22 +346,31 @@ goto main
     s$="":cr=1:gosub draw_text
     s$="'I am afraid this means that I need to shoot you now!'"
     cr=1:dc=2:gosub draw_text
-    sleep 1.5
+    delay=1.5:gosub pause
+
     s$="":cr=1:gosub draw_text
     s$="BANG!"
     cr=1:dc=10:gosub draw_text
-    sleep 1.5
+    delay=1.5:gosub pause
     return
   bend
 
   s$="'Looks like you've got it all...'"
   cr=1:dc=2:gosub draw_text
-  sleep 1
+  delay=1:gosub pause
+
   s$="'Now, demonstrate your MEGA65 coding skills to me, otherwise...'"
   cr=1:dc=2:gosub draw_text
-  sleep 2
+  delay=2:gosub pause
 
   res% = 1
+  return
+
+.pause
+  t1=ti
+.pauselp
+  gosub poll_play
+  if (ti-t1) < delay then goto pauselp
   return
 
 .captured_by_onion_cake
@@ -369,6 +380,9 @@ goto main
   s$="at gunpoint, and forcefully escorting you to his dungeon in Germany..."
   cr=1:dc=14:gosub draw_text
 
+  current_room% = GERMANY
+  gosub init_music
+
   if DEBUG=0 then begin
     onion% = 1 : onion$="onion.v" : gosub load
   bend:else begin
@@ -376,9 +390,8 @@ goto main
     inv_count%=1
   bend
 
-  current_room% = GERMANY
   if DEBUG=0 then begin
-    sleep 2
+    delay=2:gosub pause
   bend
 
   gosub show_room_graphic
@@ -389,19 +402,18 @@ goto main
     s$=", Onion Cake exclaims!"
     cr=1:dc=14:gosub draw_text
     s$="":cr=1:gosub draw_text
-    sleep 1.5
+    delay=1.5:gosub pause
 
     s$="'If you show me your programming skills I will release you!'"
     cr=0:dc=2:gosub draw_text
     s$=" he offers."
     cr=1:dc=14:gosub draw_text
     s$="":cr=1:gosub draw_text
-    sleep 2
+    delay=2:gosub pause
 
     s$="'If not, I will shoot you!'"
     cr=1:dc=2:gosub draw_text
-
-    sleep 2
+    delay=2:gosub pause
 
     gosub check_we_have_all_computer_items
   bend:else begin
@@ -458,20 +470,22 @@ goto main
   cr=0:dc=2:gosub draw_text
   s$=", Onion Cake says with admiration!"
   cr=1:dc=14:gosub draw_text
-  sleep 1
+  delay=1:gosub pause
+
   s$="'You have proven yourself worthy to keep alive! I hereby release you!"
   cr=1:dc=2:gosub draw_text
-  sleep 1.5
+  delay=2:gosub pause
+
   s$="Remember your promise, otherwise I will find you and shoot you!'"
   cr=1:dc=2:gosub draw_text
-  sleep 1.5
+  delay=2:gosub pause
 
   s$="You are free again! Congratulations, you won the game!"
   cr=1:dc=7:gosub draw_text
   game_over%=1
-  sleep 1.5
+  delay=1.5:gosub pause
   return
-
+       
 .use
 '---
   gosub extract_token
@@ -707,6 +721,10 @@ goto main
   screen clr 0
 
   gosub init_music
+
+  'TODO: remove
+  return
+
   if has_attic_ram%=1 and cached%(current_room%)=1 then begin
     gosub load_from_cache
     return
@@ -732,7 +750,7 @@ goto main
 
     s$="GAME OVER"
     cr=1:dc=5:gosub draw_text
-    sleep 2
+    delay=2:gosub pause
     screen close
     return
   bend
@@ -783,10 +801,11 @@ goto main
 .show_title_page
 '---------------
   print chr$(147);
+  play:play "","","","","",""
   print "Onion Cake and the Hungry Dinosaurs"
   print "==================================="
   print "  Coding & Music sequencing by Gurce Isikyildiz"
-  print "  Dino Artistry by Ayca Isikyildiz"
+  print "  Artwork by Ayca Isikyildiz"
   print
   print " I)nstructions"
   print " C)redits"
@@ -837,7 +856,6 @@ goto main
   print
   print "NOTE: Current MEGA65 core has problems in 640x400 16 colour mode"
   print "- Performs better in Xemu right now"
-  print "- Run xemu with '-fastclock 200' to speed things up!"
   gosub press_a_key
 
   print chr$(147);
@@ -846,12 +864,10 @@ goto main
   print "- N, S, E, W   (to go North, South, East, West)"
   print "- L/LOOK"
   print "- I/INVENTORY"
-  print "- GO <place>"
-  print "- TAKE <object>"
+  print "- GET/TAKE <object>"
   print "- USE <object>"
   print "- GIVE <object>"
   print "- HIT <object>"
-  print "- JOIN <object>"
   print "- QUIT/EXIT"
   gosub press_a_key
 
@@ -863,24 +879,21 @@ goto main
   print "Credits"
   print "======="
   print "Coding and Music sequencing by Gurce Isikyildiz"
-  print "Dino Artistry by Ayca Isikyildiz"
+  print "Artwork by Ayca Isikyildiz"
   print "- You're welcome to donate to the artist to encourage her to contribute more"
   print "  of her artwork to future MEGA65 games!"
-  print "- Welcome to donate a few dollars over paypal to:"
-  print "  PayPal username: info@wombatistan.com"
+  print "  - https://tinyurl.com/ayca-donate"
   print
-  print "Song cover credits"
-  print "------------------"
-  print "Australia - ";chr$(34);"Skippy the Bush Kangaroo";chr$(34);
-    print " - Eric Jupp"
-  print "Germany - ";chr$(34);"99 Luftballons";chr$(34);" - NENA"
-  print "Thailand - ";chr$(34);"Khleun Grathop Fang (Waves crash to the shore)";chr$(34);
-    print " - King Prajadhipok"
-  ' youtu.be/HLqlZ2jGbDg
-  print "Turkey - ";chr$(34);"Hatcam Cikmis Gul Dalina";chr$(34);
-    print " - Unknown"
-  print "Vietnam - ";chr$(34);"Trong Com (Rice Drum song)";chr$(34);
-    print " - Unknown"
+  print "Song credits"
+  print "------------"
+  print "Australia - ";chr$(34);"Cocky the Cloned Cockatoo";chr$(34);" - Gurce"
+  print "Germany - ";chr$(34);"The Angel's Angled Ankle";chr$(34);" - Gurce"
+  print "Thailand - ";chr$(34);"Khleun Grathop Fang";chr$(34)
+  print "    (Waves crash to the shore) - King Prajadhipok"
+  print "Turkey - ";chr$(34);"Hatcam Cikmis Gul Dalina";chr$(34)
+  print "    (My Hatche came out on the Rose Branch) - Unknown"
+  print "Vietnam - ";chr$(34);"Con Thuong Rau Dang Moc Sau He";chr$(34)
+  print "    (Still Love the Bitter Herb that Grows after Summer) - Bac Son"
   gosub press_a_key
 
   print chr$(147);
@@ -1008,10 +1021,13 @@ goto main
 
 .fill_poly
 '---------
+  poll_cnt%=0
+
   gosub find_ymin_ymax
   for y%=ymin% to ymax%
     gosub draw_horizontal_intersects
-    gosub poll_play
+    poll_cnt%=poll_cnt%+1
+    if poll_cnt%=5 then gosub poll_play:poll_cnt%=0
   next y%
   return
 
@@ -1044,11 +1060,13 @@ goto main
 
 .boxfill
 '-------
+  poll_cnt%=0
   k=1
   if by0% > my% then k=-1
   for y% = by0% to my% step k
     line bx0%, y%, mx%, y%
-    gosub poll_play
+    poll_cnt%=poll_cnt%+1
+    if poll_cnt%=5 then gosub poll_play:poll_cnt%=0
   next y%
   return
 
@@ -1217,12 +1235,18 @@ goto main
 
 .init_music
 '==========
-  play
-  tempo songs_tmpo%(s%)
+  if s% <> current_room% then begin
+    s% = current_room%
+    play
+    tempo songs_tmpo%(s%)
 
-  bar_index=0
+    bar_index=0
 
-  if s% = 2 then gosub thai_song
+    s% = current_room%
+    if s% = 0 then gosub german_song
+    if s% = 2 then gosub thai_song
+    if s% = 4 then gosub aus_song
+  bend
   return
 
 .poll_play
@@ -1231,9 +1255,15 @@ goto main
 
   music_chunk_index=bar_index ' map_bar_to_chunk(bar_index)
   
-  play v1$(music_chunk_index),v2$(music_chunk_index),v3$(music_chunk_index)
-  sleep .05
-  play ,,,v4$(music_chunk_index),v5$(music_chunk_index),v6$(music_chunk_index)
+  if songs_cpy%(s%)=1 then begin
+    play v1$(music_chunk_index),v2$(music_chunk_index),v3$(music_chunk_index)
+    sleep .05
+    play ,,,v1$(music_chunk_index),v2$(music_chunk_index),v3$(music_chunk_index)
+  bend:else begin
+    play v1$(music_chunk_index),v2$(music_chunk_index),v3$(music_chunk_index)
+    sleep .05
+    play ,,,v4$(music_chunk_index),v5$(music_chunk_index),v6$(music_chunk_index)
+  bend
 
   bar_index=bar_index+1
   if bar_index=songs_bars%(s%) then bar_index=0
@@ -1310,5 +1340,105 @@ v3$( 9)="t1o3w ee gg ee"
 v4$( 9)="t6o4h ggggsr igggggggr gggggggr gggggggg gggggggr"
 v5$( 9)="t1o3w gg bb gg"
 v6$( 9)="t1o4w cc dd cc"
+return
+
+.aus_song
+'--------
+v1$( 0)="o5ifed q.c rie q.g r io4go5cccqcie qgieqgie"
+v2$( 0)="t0o2q.r .c iggg o1q.g o2iddd q.c iggg o1q.g o2iddd"
+v3$( 0)=""
+v4$( 0)=""
+v5$( 0)=""
+v6$( 0)=""
+
+v1$( 1)="o5qfieqdif qeidqcie qdico4qbia q.g"
+v2$( 1)="t0o2q.f iaaa q.c iggg o1q.go2 iddd o1q.g"
+v3$( 1)=""
+v4$( 1)=""
+v5$( 1)=""
+v6$( 1)=""
+
+v1$( 2)="o5ifed q.c rie q.g r io4go5cccqcie qgieqgie"
+v2$( 2)="t0o2q.r .c iggg o1q.g o2iddd q.c iggg o1q.g o2iddd"
+v3$( 2)=""
+v4$( 2)=""
+v5$( 2)=""
+v6$( 2)=""
+
+v1$( 3)="o5qfieqdif qeidqcie qdieq#fia gfd o4bgd"
+v2$( 3)="t0o2q.f iaaa q.c iggg o2q.d iaaa o1q.g"
+v3$( 3)=""
+v4$( 3)=""
+v5$( 3)=""
+v6$( 3)=""
+
+v1$( 4)="o5ibgdbgd a#fda#fd gecgec qdieq#fia bgdbgd a#fda#fd o6qco5ibo6qcieq.d.#f"
+v2$( 4)="m0t0o2q.d iggg q.d iaaa q.c iggg q.d iaaa q.d iggg q.d iaaa q.c iggg h.d"
+v3$( 4)=""
+v4$( 4)=""
+v5$( 4)=""
+v6$( 4)=""
+
+v1$( 5)="o5qafio4m1cdedcgfe o5qge o4icdedco3bag"
+v2$( 5)="m0t0o2q.c iaaa q.c iaaa q.c iggg q.c iggg"
+v3$( 5)=""
+v4$( 5)=""
+v5$( 5)=""
+v6$( 5)=""
+
+v1$( 6)="o5qf.did q.e#fia q.g ifgf efe ded"
+v2$( 6)="t0o1q.g o2iddd o1q.g o2iddd o1q.g o2iddd o1q.g o2iddd"
+v3$( 6)=""
+v4$( 6)=""
+v5$( 6)=""
+v6$( 6)=""
+
+v1$( 7)="o5qafio4m1cdedcgfe o5qge o4icdedco3bag"
+v2$( 7)="m0t0o2q.c iaaa q.c iaaa q.c iggg q.c iggg"
+v3$( 7)=""
+v4$( 7)=""
+v5$( 7)=""
+v6$( 7)=""
+
+v1$( 8)="o5qqf.did q.eico4bo5d co4go5co4egeq.c"
+v2$( 8)="t0o1q.g o2iddd o1q.g o2iddd o2q.c iggg o2q.c"
+v3$( 8)=""
+v4$( 8)=""
+v5$( 8)=""
+v6$( 8)=""
+return
+
+.german_song
+'-----------
+v1$( 0)="o6m5t2 w.c ho5g w.#f hd wf hb o6d w.c hr"
+v2$( 0)="o5m5t2 w.c ho4g w.#f hd wf hb o5d w.c hr"
+v3$(0)=""
+
+v1$( 1)="t6m0io1#ao2co1cc #ao2#co1#c#c o2ceo1cc o2efo1ff"
+v2$( 1)="t6m0io1#ao2co2cc #ao2#co2#c#c o2ce1o2cc o2efo2ff"
+v3$( 1)="m0t3q o2cr o4gr o2cr o4gr"
+v1$(1)=v1$(1)+v1$(1)
+v2$(1)=v2$(1)+v2$(1)
+v3$(1)=v3$(1)+v3$(1)
+v1$(1)=v1$(1)+v1$(1)
+v2$(1)=v2$(1)+v2$(1)
+v3$(1)=v3$(1)+v3$(1)
+
+v1$( 2)="to6 qrccc ccc sc#dd#d o5wbr qr #g#g#g ff b o6sc#dd#d wcr"
+v2$( 2)="t6m0o1iccrrccrrccrrccrr ggrrggrrggrrggrr ffrrffrrffrrffrr ccrrccrrccrrccrr"
+v3$( 2)="t3q o2cr o4gr o2cr o4gr o2cr o4gr o2cr o4gr   o2cr o4gr o2cr o4gr o2cr o4gr o2cr o4gr"
+
+v1$( 3)="to6 qrggg ggg sg#aa#a w#fr qrfff sf#dfg #dd#df dcd#d co5#gg#g wcr"
+v2$( 3)="t6m0o1iccrrccrrccrrccrr #f#frr#f#frr#f#frr#f#frr ffrrffrrffrrffrr ccrrccrrccrrccrr"
+v3$( 3)="t3q o2cr o4gr o2cr o4gr o2cr o4gr o2cr o4gr  o2cr o4gr o2cr o4gr o2cr o4gr o2cr o4gr"
+
+v1$(4) = v1$(1)
+v2$(4) = v2$(1)
+v3$(4) = v3$(1)
+
+v1$(5) = v1$(0)
+v2$(5) = v2$(3)
+v3$(5) = v3$(3)
+
 return
 ÿ
