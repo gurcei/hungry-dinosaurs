@@ -30,9 +30,9 @@ map(12)=8:map(13)=8
 
 SONG songs(4) = [ {x5F}
   [ 18, 6, 1 ], {x5F}
-  [ 18, 14, 1 ], {x5F}
+  [ 25, 14, 1 ], {x5F}
   [ 35, 10, 0 ], {x5F}
-  [ 15, 10, 1 ], {x5F}
+  [ 15, 6, 1 ], {x5F}
   [ 20, 9, 1 ]  {x5F}
 ]
 
@@ -83,7 +83,7 @@ ROOM rooms(MAX_ROOMS) = [ {x5F}
      "", "", "german.v", 0 ], {x5F}
  [ "A Turkish dinosaur is bathing in the thermal waters.", {x5F}
      "S", "2", "turk.v", 0 ], {x5F}
- [ "A Thai dinosuar is performing a traditional dance.", {x5F}
+ [ "A Thai dinosaur is performing a traditional dance.", {x5F}
      "NE", "13", "thai.v", -9 ], {x5F} 
  [ "A Vietnamese dinosaur is tending to the rice terraces.", {x5F}
      "WS", "24", "viet.v", 0 ], {x5F}
@@ -1424,35 +1424,34 @@ return
 
 .viet_song
 '---------
-v1$( 0)="t2o5 qgp6 iag idfqd"
-v2$( 0)=""
+v1$(0)="t2o5 o5qgp6 iag idfqd"
+v2$(0)=""
 
-v1$( 1)="o5p6m1 wg qr fsfgif qe iesfeie o4p9gp6q#ahi#a"
-v2$( 1)="t2o2wgg c"
+v1$(1)="o5p6m1 wg qr fsfgif qe iesfeie o4p9gp6q#ahi#ar"
+v1$(1)=v1$(1)+"t2o5p6m1 qrp0scp6dcd p0cp6id sr idp3#f p6 o4q.g o5p8if p6qo4sp9#aa#a#b p6q#a"
+v2$(1)="t1o2wgg c   o2wcc"
+v3$(1)="t1o3wdd o2g o2wgg"
 
-v1$( 2)="t2o5p6m1 qrp0scp6dcd p0cp6id sr idp3#f p6 o4q.g o5p8if p6qo4sp9#aa#a#b p6q#a"
-v2$( 2)="o2wcc"
 
-v1$( 3)="t2o5qrsci.d sci.d sp9cdfg p8o4h.gqr o5qgiag idfqd"
-v2$( 3)="o2wcgg"
+v1$(2)="t2o5qrsci.d sci.d sp9cdfg p8o4h.gqr o5qgiag idfqd"
+v1$(2)=v1$(2)+"p6t2o5 q.gsag qf o4.#air o5sp0dp3#dd#d o4p8ig#ao5cd"
+v2$(2)="o2wcgf   o2wgo1#a"
+v3$(2)="o2wgo3dc o3wdo2f"
 
-v1$( 4)="p6t2o5 q.gsag qf o4.#air o5sp0dp3#dd#d o4p8ig#ao5cd"
-v2$( 4)="o2wgg"
 
-v1$( 5)="t2o4 q.g sp5ga ifp2g qf r p6fao5c o4q.a ig sp2fefe p6qg r iga sp3fefe qd wg"
-v2$( 5)="o2wgg dcg"
+v1$(3)="t2o4 q.g sp5ga ifp2g qf r p6fao5c o4q.a ig sp2fefe p6qg r iga sp3fefe qd wg"
+v1$(3)=v1$(3)+"t2o5 p0qgp6iag dfqd .gsag qaq.a irq #a#a so6p8co5#ao6cd"
+v2$(3)="o2wgf dcg      o2wf gf"
+v3$(3)="o3wdc o2ago3d  o3wc dc"
 
-v1$( 6)="t2o5 p0qgp6iag dfqd .gsag qaq.a irq #a#a so6p8co5#ao6cd"
-v2$( 6)="o2wg gf"
+v1$(4)="t2o5 q.gsag qfq.f ir qa iao6c cd o5p8q.dic qd ha iao6ccd o5p0dp6f wg"
+v2$(4)="o2w#dfd#dg"
+v3$(4)="o2w#ao3co2a#ao3d"
 
-v1$( 7)="t2o5 q.gsag qfq.f ir qa iao6c cd o5p8q.dic qd ha iao6ccd o5p0dp6f wg"
-v2$( 7)="o2w#d f d #d g"
-
-v1$( 8)="t2o5p6qfifgsfgfgo4ip0#ao5p8do4q.gsagqf.giro5qdidfqd.dico4s#ag#ago5scp3#cc#cqc"
-v2$( 8)="o2wgg#a#ao3c"
-
-v1$( 9)="t2o5p6qco4#ao5 sco4#ao5cd o4q.gsag qf.fir qaia qo5csco4#ao5cdco4#ao5cd o4wg"
-v2$( 9)="o3h.c o2wg f g"
+v1$(5)="t2o5p6qfifg sfgfg o4ip0#ao5p8d o4q.gsag qf.gir o5qdidfqd.dico4s#ag#ago5scp3#cc#cqc"
+v1$(5)=v1$(5)+"t2o5p6hqco4#ao5 sco4#ao5cd o4q.gsag qf.fir qaia qo5csco4#ao5cdco4#ao5cd o4h.g"
+v2$(5)="o2wfg#a#ao3c o2wg f g"
+v3$(5)="o3wcdffo3g o3wd c d"
 
 return
 
