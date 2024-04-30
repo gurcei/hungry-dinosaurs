@@ -4,7 +4,7 @@ import re
 import struct
 
 def read_xml():
-    return ET.parse('tiger4.svg').getroot()
+    return ET.parse('Anathema.svg').getroot()
 
 LINE    = 0
 CIRCLE  = 1
@@ -14,8 +14,10 @@ POLY    = 4
 COLOUR = 63
 FILL_FLAG = 64
 
-scalex = 640/64000
-scaley = 320 / 32047
+scalex = 640/640
+scaley = 320. / 350.
+offsx=-10
+offsy=-100
 
 map_svg_to_m65_clr = {
     'none': -1,
@@ -60,7 +62,7 @@ def check_for_colour_change(clr):
 
 def parse_polygon(poly):
     clr = map_clrname_to_m65clr['.'+poly['class']]
-    check_for_colour_change(clr)
+    # check_for_colour_change(clr)
 
     ptxt = poly['points']
     minx = 0
@@ -82,7 +84,7 @@ def parse_polygon(poly):
     #         miny=y
     #     if y>maxy:
     #         maxy=y
-        points.append([x * scalex, y * scaley])
+        points.append([x * scalex + offsx, y * scaley + offsy])
 
     # print(points)
     # print('minx={}, maxx={}'.format(minx, maxx))
@@ -112,8 +114,8 @@ def parse_polygon(poly):
         outfile.write(struct.pack('<H', int(coord[1])))
 
 def parse_path(path):
-    clr = map_clrname_to_m65clr['.'+path['class']]
-    check_for_colour_change(clr)
+    clr = 'white' #map_clrname_to_m65clr['.'+path['class']]
+    # check_for_colour_change(clr)
 
     absx = 0
     absy = 0
@@ -123,7 +125,7 @@ def parse_path(path):
     txt = path['d']
     print('txt = {}'.format(txt))
     while len(txt) > 0:
-        m = re.match(r'[Mmclz](.*?)[Mmclz].*', txt)
+        m = re.match(r'[Mmchlzv](.*?)[Mmchlzv].*', txt)
         if m:
             t = m.groups()[0]
         else:
@@ -131,19 +133,21 @@ def parse_path(path):
         cmd = txt[0]
         print('clr = {} : cmd = {} : t = {}'.format(clr, cmd, t))
         txt=txt[len(t)+1:]
+        t = t.strip()
 
         if cmd == 'M':
-            tx,ty = t.split(' ')
-            x = int(tx)
-            y = int(ty)
-            absx = x
-            absy = y
-            points.append([absx * scalex, absy * scaley])
+            for coord in t.strip().split(' '):
+                tx,ty = coord.split(',')
+                x = float(tx)
+                y = float(ty)
+                absx = x
+                absy = y
+                points.append([absx * scalex + offsx, absy * scaley + offsy])
 
         if cmd == 'z':
             # save out to vart file
             v = POLY + FILL_FLAG
-            if path['class'] == 'fil3':
+            if 'class' in path and path['class'] == 'fil3':
                 v = POLY
             outfile.write(struct.pack('B', v))
             outfile.write(struct.pack('B', len(points)))
@@ -153,45 +157,57 @@ def parse_path(path):
                 outfile.write(struct.pack('<H', int(coord[1])))
             points=[]
 
+        # if cmd == 'm':
+        #     tx,ty = t.split(' ')
+        #     x = int(tx)
+        #     y = int(ty)
+        #     absx += x
+        #     absy += y
+        #     points.append([absx * scalex, absy * scaley])
         if cmd == 'm':
-            tx,ty = t.split(' ')
-            x = int(tx)
-            y = int(ty)
-            absx += x
-            absy += y
-            points.append([absx * scalex, absy * scaley])
+            for coord in t.strip().split(' '):
+                print 'coord={}'.format(coord)
+                tx,ty = coord.split(',')
+                print 'tx={}, ty={}, scaley={}'.format(tx,ty, scaley)
+                absx += float(tx)
+                absy += float(ty)
+                points.append([absx * scalex + offsx, absy * scaley + offsy])
 
         if cmd == 'c':
             cnt = 0
             for coord in t.strip().split(' '):
+                # print coord
                 tx,ty = coord.split(',')
                 if cnt == 2:
-                    absx += int(tx)
-                    absy += int(ty)
-                    points.append([absx * scalex, absy * scaley])
+                    absx += float(tx)
+                    absy += float(ty)
+                    points.append([absx * scalex + offsx, absy * scaley + offsy])
                     cnt = 0
                 else:
                     cnt += 1
 
         if cmd == 'l':
-            cnt = 0
             for ival in t.strip().split(' '):
-                if cnt % 2 == 0:
-                    absx += int(ival)
-                if cnt % 2 == 1:
-                    absy += int(ival)
-                    points.append([absx * scalex, absy * scaley])
-                cnt += 1
+                for coord in ival.strip().split(' '):
+                    tx,ty = coord.split(',')
+                    absx += float(tx)
+                    absy += float(ty)
+                    points.append([absx * scalex + offsx, absy * scaley + offsy])
+
+        if cmd == 'v':
+            # todo: vertical line
+            continue
 
 xml = read_xml()
 
-colours = extract_colours(xml)
+# colours = extract_colours(xml)
 
 outfile = open('test.v', 'wb')
 outfile.write(b'VEC')
 
 # iterate over objects (polygons/paths)
-for item in xml[1]:
+for item in xml:
+    print(item)
     if 'polygon' in item.tag:
         parse_polygon(item.attrib)
     elif 'path' in item.tag:
